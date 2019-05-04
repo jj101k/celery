@@ -1,0 +1,7 @@
+{
+    "name": "jdriscoll/celery",
+    "description": "A very lightweight implementation of PSR-7",
+    "require": {
+        "php": "^7.1"
+    }
+}
