@@ -22,6 +22,13 @@ class Request extends \Celery\Message implements \Psr\Http\Message\RequestInterf
     private $uri;
 
     /**
+     * Builds the object
+     */
+    public function __construct() {
+        $this->uri = new \Celery\Uri();
+    }
+
+    /**
      * @inheritdoc
      */
     public function getMethod() {
