@@ -91,6 +91,12 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             json_decode($r("OPTIONS", "/e/eff"), true),
             "OPTIONS /e/eff: as expected"
         );
+
+        $this->assertSame(
+            ["method" => "map", "args" => []],
+            json_decode($r("HEAD", "/e"), true),
+            "HEAD /e: works implicitly via GET"
+        );
     }
 
     /**
