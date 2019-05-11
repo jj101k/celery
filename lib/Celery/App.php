@@ -264,7 +264,7 @@ class App {
             $path_handler = $this->handlers[$method];
             foreach($path_handler as $path => $handler) {
                 if(preg_match($path, $target_path, $md)) {
-                    $response = $handler(
+                    $new_response = $handler(
                         $request,
                         $response,
                         array_filter(
@@ -273,7 +273,7 @@ class App {
                             ARRAY_FILTER_USE_KEY
                         )
                     );
-                    $this->sendResponse($response);
+                    $this->sendResponse($new_response ?? $response);
                     return;
                 }
             }
