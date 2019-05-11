@@ -35,6 +35,8 @@ The following should be compatibile with typical use-cases in Slim:
 - post()
 - put()
 - run()
+- Error condition handlers (errorHandler, phpErrorHandler, notFoundHandler,
+  notAllowedHandler) as added via plain array passed to the constructor
 
 The following are not intended to be supported at the current time:
 
