@@ -22,3 +22,22 @@ cost down. This comes down to three basic decisions:
    file.
 
 3. Avoid any wildly inefficient algorithms.
+
+# Compatibility
+
+The following should be compatibile with typical use-cases in Slim:
+
+- any()
+- delete()
+- get()
+- group()
+- map()
+- post()
+- put()
+- run()
+
+The following are not intended to be supported at the current time:
+
+- patch()
+- Emulating Slim's "container"
+- Overriding `$this` in any closures
