@@ -158,4 +158,41 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
         $new->uploadedFiles = self::uploadedFilesTree($uploadedFiles);
         return $new;
     }
+
+    /**
+     * Imports the given server params (or, if null, those from $_SERVER).
+     *
+     * @param array|null $params Same format as $_SERVER
+     * @return static
+     */
+    public function withServerParams(?array $params = null) {
+        $params = $params ?? $_SERVER;
+        $new = clone($this);
+        $new->serverParams = $params;
+        @list($host, $port) = explode(":", $params["HTTP_HOST"]);
+        $uri = (new \Celery\Uri())
+            ->withScheme("http")
+            ->withHost($host)
+            ->withPort($port)
+            ->withQuery($params["QUERY_STRING"])
+            ->withPath($params["REQUEST_URI"]);
+        if($params["CONTENT_TYPE"]) {
+            $new = $new->withHeader("Content-Type", $params["CONTENT_TYPE"]);
+        }
+        foreach($params as $k => $v) {
+            if(preg_match("/^HTTP_(\w+)$/", $k, $md)) {
+                $normalised_header = implode(
+                    "-",
+                    array_map(
+                        function($w) {
+                            return ucfirst(strtolower($w));
+                        },
+                        explode("_", $md[1])
+                    )
+                );
+                $new = $new->withHeader($normalised_header, $v);
+            }
+        }
+        return $new->withMethod($params["REQUEST_METHOD"])->withUri($uri);
+    }
 }
