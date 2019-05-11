@@ -59,5 +59,5 @@ foreach($paths as $path) {
 }
 $app->run([
     "REQUEST_METHOD" => "GET",
-    "REQUEST_URI" => $paths[count($paths) - 1],
+    "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
 ]);
