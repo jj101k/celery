@@ -22,6 +22,13 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
     private $protocolVersion;
 
     /**
+     * Builds the object
+     */
+    public function __construct() {
+        $this->body = new \Celery\Body();
+    }
+
+    /**
      * @inheritdoc
      */
     public function getBody() {
