@@ -190,7 +190,7 @@ class Uri implements \Psr\Http\Message\UriInterface {
      */
     public function withUserInfo($user, $password = null) {
         $new = clone($this);
-        $new->userInfo = isset($password) ? "{$user}:{$pasword}" : $user;
+        $new->userInfo = isset($password) ? "{$user}:{$password}" : $user;
         return $new;
     }
 
