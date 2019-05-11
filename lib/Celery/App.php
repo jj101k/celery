@@ -6,6 +6,16 @@ namespace Celery;
  */
 class App {
     /**
+     * @property array Methods to path patterns to handler callables
+     */
+    private $handlers = [];
+
+    /**
+     * @property string Used for group().
+     */
+    private $pathPrefix = "";
+
+    /**
      * @param string $pattern A FastRoute pattern, eg. /foo/{bar}[/{baz:.*}]
      * @return string An equivalent regexp eg. "/foo/(?<bar>[^/]+)(?:/(?<baz>.+))?"
      */
@@ -81,6 +91,196 @@ class App {
             $boxed
         );
         return $unescaped;
+    }
+
+    /**
+     * Adds a handler for any requests on a path
+     *
+     * @param string $path eg. "/a"
+     * @param callable $handler {
+     *  @param \Psr\Http\Message\ServerRequestInterface $req
+     *  @param \Psr\Http\Message\ResponseInterface $res
+     *  @param array $args Fastroute labels to path component strings
+     *  @return \Psr\Http\Message\ResponseInterface|void
+     * }
+     */
+    public function any(string $path, callable $handler) {
+        $r = self::fastrouteToRegexp($this->pathPrefix . $path);
+        $this->handlers["any"][$r] = $handler;
+    }
+
+    /**
+     * Adds a handler for DELETE requests on a path
+     *
+     * @param string $path eg. "/a"
+     * @param callable $handler {
+     *  @param \Psr\Http\Message\ServerRequestInterface $req
+     *  @param \Psr\Http\Message\ResponseInterface $res
+     *  @param array $args Fastroute labels to path component strings
+     *  @return \Psr\Http\Message\ResponseInterface|void
+     * }
+     */
+    public function delete(string $path, callable $handler) {
+        $r = self::fastrouteToRegexp($this->pathPrefix . $path);
+        $this->handlers["delete"][$r] = $handler;
+    }
+
+    /**
+     * Adds a handler for GET requests on a path
+     *
+     * @param string $path eg. "/a"
+     * @param callable $handler {
+     *  @param \Psr\Http\Message\ServerRequestInterface $req
+     *  @param \Psr\Http\Message\ResponseInterface $res
+     *  @param array $args Fastroute labels to path component strings
+     *  @return \Psr\Http\Message\ResponseInterface|void
+     * }
+     */
+    public function get(string $path, callable $handler) {
+        $r = self::fastrouteToRegexp($this->pathPrefix . $path);
+        $this->handlers["get"][$r] = $handler;
+    }
+
+    /**
+     * Supports adding subpaths with a given parent path
+     *
+     * @param string $path eg. "/a"
+     * @param callable $handler {
+     *  @param \Celery\App $app
+     * }
+     */
+    public function group(string $path, callable $handler) {
+        $new = clone($this);
+        // This deliberately leaves $handlers unchanged
+        $new->handlers = &$this->handlers;
+        $new->pathPrefix .= $path;
+        $handler($new);
+    }
+
+    /**
+     * Adds a handler for HEAD requests on a path
+     *
+     * @param string $path eg. "/a"
+     * @param callable $handler {
+     *  @param \Psr\Http\Message\ServerRequestInterface $req
+     *  @param \Psr\Http\Message\ResponseInterface $res
+     *  @param array $args Fastroute labels to path component strings
+     *  @return \Psr\Http\Message\ResponseInterface|void
+     * }
+     */
+    public function head(string $path, callable $handler) {
+        $r = self::fastrouteToRegexp($this->pathPrefix . $path);
+        $this->handlers["head"][$r] = $handler;
+    }
+
+    /**
+     * Adds a handler for specified requests on a path
+     *
+     * @param string[] $methods eg. ["GET"]
+     * @param string $path eg. "/a"
+     * @param callable $handler {
+     *  @param \Psr\Http\Message\ServerRequestInterface $req
+     *  @param \Psr\Http\Message\ResponseInterface $res
+     *  @param array $args Fastroute labels to path component strings
+     *  @return \Psr\Http\Message\ResponseInterface|void
+     * }
+     */
+    public function map(array $methods, string $path, callable $handler) {
+        $r = self::fastrouteToRegexp($this->pathPrefix . $path);
+        foreach($methods as $m) {
+            $this->handlers[strtolower($m)][$r] = $handler;
+        }
+    }
+
+    /**
+     * Adds a handler for OPTIONS requests on a path
+     *
+     * @param string $path eg. "/a"
+     * @param callable $handler {
+     *  @param \Psr\Http\Message\ServerRequestInterface $req
+     *  @param \Psr\Http\Message\ResponseInterface $res
+     *  @param array $args Fastroute labels to path component strings
+     *  @return \Psr\Http\Message\ResponseInterface|void
+     * }
+     */
+    public function options(string $path, callable $handler) {
+        $r = self::fastrouteToRegexp($this->pathPrefix . $path);
+        $this->handlers["options"][$r] = $handler;
+    }
+
+    /**
+     * Adds a handler for POST requests on a path
+     *
+     * @param string $path eg. "/a"
+     * @param callable $handler {
+     *  @param \Psr\Http\Message\ServerRequestInterface $req
+     *  @param \Psr\Http\Message\ResponseInterface $res
+     *  @param array $args Fastroute labels to path component strings
+     *  @return \Psr\Http\Message\ResponseInterface|void
+     * }
+     */
+    public function post(string $path, callable $handler) {
+        $r = self::fastrouteToRegexp($this->pathPrefix . $path);
+        $this->handlers["post"][$r] = $handler;
+    }
+
+    /**
+     * Adds a handler for PUT requests on a path
+     *
+     * @param string $path eg. "/a"
+     * @param callable $handler {
+     *  @param \Psr\Http\Message\ServerRequestInterface $req
+     *  @param \Psr\Http\Message\ResponseInterface $res
+     *  @param array $args Fastroute labels to path component strings
+     *  @return \Psr\Http\Message\ResponseInterface|void
+     * }
+     */
+    public function put(string $path, callable $handler) {
+        $r = self::fastrouteToRegexp($this->pathPrefix . $path);
+        $this->handlers["put"][$r] = $handler;
+    }
+
+    /**
+     * Handles the request, based on the environment.
+     *
+     * @param array|null $server_params Mostly for testing
+     */
+    public function run(?array $server_params = null) {
+        $request = (new \Celery\ServerRequest())
+            ->withServerParams($server_params ?? $_SERVER)
+            ->withUploadedFiles($_FILES);
+        $response = new \Celery\Response();
+        $target_method = strtolower($request->getMethod());
+        $target_path = $request->getUri()->getPath();
+
+        if($request->getMethod() == "HEAD") {
+            $matching_methods = [strtolower($request->getMethod()), "get", "any"];
+        } else {
+            $matching_methods = [strtolower($request->getMethod()), "any"];
+        }
+        foreach(
+            array_intersect($matching_methods, array_keys($this->handlers)) as $method
+        ) {
+            $path_handler = $this->handlers[$method];
+            foreach($path_handler as $path => $handler) {
+                if(preg_match($path, $target_path, $md)) {
+                    $response = $handler(
+                        $request,
+                        $response,
+                        array_filter(
+                            $md,
+                            function($k) {return !is_numeric($k);},
+                            ARRAY_FILTER_USE_KEY
+                        )
+                    );
+                    $this->sendResponse($response);
+                    return;
+                }
+            }
+        }
+        throw new \Exception(
+            "Handler not found for {$request->getMethod()} {$request->getUri()->getPath()}"
+        );
     }
 
     /**
