@@ -20,7 +20,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             $written .= $buffer;
             return "";
         });
-        $app->run([
+        $app->run(false, [
             "REQUEST_METHOD" => $method,
             "REQUEST_URI" => $path,
         ]);

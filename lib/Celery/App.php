@@ -289,9 +289,10 @@ class App {
     /**
      * Handles the request, based on the environment.
      *
+     * @param bool $silent Strictly for Slim compat, drops the response send
      * @param array|null $server_params Mostly for testing
      */
-    public function run(?array $server_params = null) {
+    public function run(bool $silent = false, ?array $server_params = null) {
         $request = (new \Celery\ServerRequest())
             ->withServerParams($server_params ?? $_SERVER)
             ->withUploadedFiles($_FILES);
@@ -361,7 +362,9 @@ class App {
                     } catch(\Error $e) {
                         $new_response = $error_handler($request, $response, $e);
                     }
-                    $this->sendResponse($new_response ?? $response);
+                    if(!$silent) {
+                        $this->sendResponse($new_response ?? $response);
+                    }
                     return;
                 }
             }
@@ -376,9 +379,10 @@ class App {
             }
             sort($literal_methods);
             $new_response = $method_not_allowed_handler($request, $response, $literal_methods);
-            $this->sendResponse($new_response ?? $response);
         } else {
             $new_response = $not_found_handler($request, $response);
+        }
+        if(!$silent) {
             $this->sendResponse($new_response ?? $response);
         }
     }

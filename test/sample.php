@@ -57,7 +57,7 @@ foreach($paths as $path) {
         return $response->withJSON([]);
     });
 }
-$app->run([
+$app->run(false, [
     "REQUEST_METHOD" => "GET",
     "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
 ]);
