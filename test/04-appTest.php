@@ -7,6 +7,27 @@ use \Psr\Http\Message\ResponseInterface;
  */
 class AppTest extends \PHPUnit\Framework\TestCase {
     /**
+     * Runs the request via $app, returns the body content.
+     *
+     * @param \Celery\App $app
+     * @param string $method
+     * @param string $path
+     * @return string
+     */
+    private function runRequest(\Celery\App $app, string $method, string $path): string {
+        $written = "";
+        ob_start(function($buffer) use (&$written) {
+            $written .= $buffer;
+            return "";
+        });
+        $app->run([
+            "REQUEST_METHOD" => $method,
+            "REQUEST_URI" => $path,
+        ]);
+        ob_end_flush();
+        return $written;
+    }
+    /**
      * These are the basic things you'd do, including get() and run().
      */
     public function testHandlers() {
@@ -47,56 +68,43 @@ class AppTest extends \PHPUnit\Framework\TestCase {
         });
         $app->map(["GET", "OPTIONS"], "/e[/{f}]", $handler_for("map"));
 
-        $r = function(string $method, string $path) use ($app) {
-            $written = "";
-            ob_start(function($buffer) use (&$written) {
-                $written .= $buffer;
-                return "";
-            });
-            $app->run([
-                "REQUEST_METHOD" => $method,
-                "REQUEST_URI" => $path,
-            ]);
-            ob_end_flush();
-            return $written;
-        };
         $this->assertSame(
             ["method" => "any", "args" => []],
-            json_decode($r("GET", "/a"), true),
+            json_decode($this->runRequest($app, "GET", "/a"), true),
             "GET /a: as expected"
         );
         foreach($TEST_METHODS as $method) {
             $http_method = strtoupper($method);
             $this->assertSame(
                 ["method" => $method, "args" => ["c" => "see"]],
-                json_decode($r($http_method, "/b/see"), true),
+                json_decode($this->runRequest($app, $http_method, "/b/see"), true),
                 "{$http_method} /b/see: as expected"
             );
         }
         $this->assertSame(
             ["method" => "c-get", "args" => []],
-            json_decode($r("GET", "/c"), true),
+            json_decode($this->runRequest($app, "GET", "/c"), true),
             "GET /c: as expected"
         );
         $this->assertSame(
             ["method" => "c-d-get", "args" => []],
-            json_decode($r("GET", "/c/d"), true),
+            json_decode($this->runRequest($app, "GET", "/c/d"), true),
             "GET /c/d: as expected"
         );
         $this->assertSame(
             ["method" => "map", "args" => []],
-            json_decode($r("GET", "/e"), true),
+            json_decode($this->runRequest($app, "GET", "/e"), true),
             "GET /e: as expected"
         );
         $this->assertSame(
             ["method" => "map", "args" => ["f" => "eff"]],
-            json_decode($r("OPTIONS", "/e/eff"), true),
+            json_decode($this->runRequest($app, "OPTIONS", "/e/eff"), true),
             "OPTIONS /e/eff: as expected"
         );
 
         $this->assertSame(
             ["method" => "map", "args" => []],
-            json_decode($r("HEAD", "/e"), true),
+            json_decode($this->runRequest($app, "HEAD", "/e"), true),
             "HEAD /e: works implicitly via GET"
         );
     }
@@ -118,19 +126,9 @@ class AppTest extends \PHPUnit\Framework\TestCase {
                 return $response;
             }
         );
-        $written = "";
-        ob_start(function($buffer) use (&$written) {
-            $written .= $buffer;
-            return "";
-        });
-        $app->run([
-            "REQUEST_METHOD" => "GET",
-            "REQUEST_URI" => "/hello/world",
-        ]);
-        ob_end_flush();
         $this->assertSame(
             "Hello world",
-            $written,
+            $this->runRequest($app, "GET", "/hello/world"),
             "Simple body worked as expected"
         );
     }
