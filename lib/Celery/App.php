@@ -6,6 +6,11 @@ namespace Celery;
  */
 class App {
     /**
+     * @property array See __construct()
+     */
+    private $config;
+
+    /**
      * @property array Methods to path patterns to handler callables
      */
     private $handlers = [];
@@ -91,6 +96,32 @@ class App {
             $boxed
         );
         return $unescaped;
+    }
+
+    /**
+     * Builds the object
+     *
+     * @param array $config {
+     *  @var callable $errorHandler {
+     *      @return callable {
+     *          @param \Psr\Http\Message\ServerRequestInterface $request
+     *          @param \Psr\Http\Message\ResponseInterface $response
+     *          @param \Exception $e
+     *          @return \Psr\Http\Message\ResponseInterface|void
+     *      }
+     *  }
+     *  @var callable $phpErrorHandler {
+     *      @return callable {
+     *          @param \Psr\Http\Message\ServerRequestInterface $request
+     *          @param \Psr\Http\Message\ResponseInterface $response
+     *          @param \Error $e
+     *          @return \Psr\Http\Message\ResponseInterface|void
+     *      }
+     *  }
+     * }
+     */
+    public function __construct(array $config = []) {
+        $this->config = $config;
     }
 
     /**
@@ -253,6 +284,19 @@ class App {
         $target_method = strtolower($request->getMethod());
         $target_path = $request->getUri()->getPath();
 
+        $default_error_handler = function($request, $response, $exception) {
+            trigger_error($exception);
+            $response->getBody()->write("Internal Server Error");
+            return $response->withStatus(500)->withHeader("Content-Type", "text/plain");
+        };
+        $exception_handler = $this->config["errorHandler"] ?
+            $this->config["errorHandler"]() :
+            $default_error_handler;
+
+        $error_handler = $this->config["phpErrorHandler"] ?
+            $this->config["phpErrorHandler"]() :
+            $default_error_handler;
+
         if($request->getMethod() == "HEAD") {
             $matching_methods = [strtolower($request->getMethod()), "get", "any"];
         } else {
@@ -264,15 +308,21 @@ class App {
             $path_handler = $this->handlers[$method];
             foreach($path_handler as $path => $handler) {
                 if(preg_match($path, $target_path, $md)) {
-                    $new_response = $handler(
-                        $request,
-                        $response,
-                        array_filter(
-                            $md,
-                            function($k) {return !is_numeric($k);},
-                            ARRAY_FILTER_USE_KEY
-                        )
-                    );
+                    try {
+                        $new_response = $handler(
+                            $request,
+                            $response,
+                            array_filter(
+                                $md,
+                                function($k) {return !is_numeric($k);},
+                                ARRAY_FILTER_USE_KEY
+                            )
+                        );
+                    } catch(\Exception $e) {
+                        $new_response = $exception_handler($request, $response, $e);
+                    } catch(\Error $e) {
+                        $new_response = $error_handler($request, $response, $e);
+                    }
                     $this->sendResponse($new_response ?? $response);
                     return;
                 }

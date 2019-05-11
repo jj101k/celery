@@ -132,4 +132,50 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             "Simple body worked as expected"
         );
     }
+    /**
+     * Tests the stuff that goes in config (handlers for various things).
+     */
+    public function testConfig() {
+        $app = new \Celery\App([
+            "errorHandler" => function() {
+                return function(
+                    ServerRequestInterface $request,
+                    ResponseInterface $response,
+                    \Exception $e
+                ) {
+                    return $response->withJson([
+                        "type" => "exception",
+                    ]);
+                };
+            },
+            "phpErrorHandler" => function() {
+                return function(
+                    ServerRequestInterface $request,
+                    ResponseInterface $response,
+                    \Error $e
+                ) {
+                    return $response->withJson([
+                        "type" => "error",
+                    ]);
+                };
+            },
+        ]);
+        $app->get("/exception", function() {
+            throw new \Exception("foo");
+        });
+        $app->get("/error", function() {
+            return $foo->bar();
+        });
+
+        $this->assertSame(
+            ["type" => "exception"],
+            json_decode($this->runRequest($app, "GET", "/exception"), true),
+            "errorHandler: works"
+        );
+        $this->assertSame(
+            ["type" => "error"],
+            json_decode($this->runRequest($app, "GET", "/error"), true),
+            "phpErrorHandler: works"
+        );
+    }
 }
