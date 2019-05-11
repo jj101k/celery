@@ -6,6 +6,23 @@ namespace Celery;
  */
 class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerRequestInterface {
     /**
+     * @param array $uploadedFiles as $_FILES
+     * @return array Values are either recursive arrays or \Psr\Http\Message\UploadedFileInterface
+     */
+    private static function uploadedFilesTree(array $uploadedFiles): array {
+        return array_map(
+            function($f) {
+                if($f["tmp_name"]) {
+                    return new \Celery\UploadedFile($f);
+                } else {
+                    return self::uploadedFilesTree($f);
+                }
+            },
+            $uploadedFiles
+        );
+    }
+
+    /**
      * @property array
      */
     private $attributes;
@@ -134,19 +151,11 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
     }
 
     /**
-     * Create a new instance with the specified uploaded files.
-     *
-     * This method MUST be implemented in such a way as to retain the
-     * immutability of the message, and MUST return an instance that has the
-     * updated body parameters.
-     *
-     * @param array $uploadedFiles An array tree of UploadedFileInterface instances.
-     * @return static
-     * @throws \InvalidArgumentException if an invalid structure is provided.
+     * @inheritdoc
      */
     public function withUploadedFiles(array $uploadedFiles) {
         $new = clone($this);
-        $new->uploadedFiles = $uploadedFiles;
+        $new->uploadedFiles = self::uploadedFilesTree($uploadedFiles);
         return $new;
     }
 }
