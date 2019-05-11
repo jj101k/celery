@@ -2,6 +2,8 @@
 // This is normally run by test/05-timingTest.php but you can run it yourself
 // for testing.
 require_once "vendor/autoload.php";
+use \Psr\Http\Message\ServerRequestInterface;
+use \Psr\Http\Message\ResponseInterface;
 $paths = explode("\n", file_get_contents("test/patterns.txt"));
 $app = new \Celery\App([
     "errorHandler" => function() {
