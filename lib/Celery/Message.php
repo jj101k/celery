@@ -33,7 +33,7 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      */
     public function getHeader($name) {
         $m = "/^" . preg_replace("#/#", "\\x2f", quotemeta($name)) . "$/i";
-        foreach(array_keys($this->headers) as $header_name => $values) {
+        foreach($this->headers as $header_name => $values) {
             if(preg_match($m, $header_name)) {
                 return $values;
             }
