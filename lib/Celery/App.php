@@ -11,7 +11,7 @@ class App {
     private $config;
 
     /**
-     * @property array Methods to path patterns to handler callables
+     * @property array Path patterns to methods to handler callables
      */
     private $handlers = [];
 
@@ -110,6 +110,21 @@ class App {
      *          @return \Psr\Http\Message\ResponseInterface|void
      *      }
      *  }
+     *  @var callable $notAllowedHandler {
+     *      @return callable {
+     *          @param \Psr\Http\Message\ServerRequestInterface $request
+     *          @param \Psr\Http\Message\ResponseInterface $response
+     *          @param array $methods
+     *          @return \Psr\Http\Message\ResponseInterface|void
+     *      }
+     *  }
+     *  @var callable $notFoundHandler {
+     *      @return callable {
+     *          @param \Psr\Http\Message\ServerRequestInterface $request
+     *          @param \Psr\Http\Message\ResponseInterface $response
+     *          @return \Psr\Http\Message\ResponseInterface|void
+     *      }
+     *  }
      *  @var callable $phpErrorHandler {
      *      @return callable {
      *          @param \Psr\Http\Message\ServerRequestInterface $request
@@ -137,7 +152,7 @@ class App {
      */
     public function any(string $path, callable $handler) {
         $r = self::fastrouteToRegexp($this->pathPrefix . $path);
-        $this->handlers["any"][$r] = $handler;
+        $this->handlers[$r]["any"] = $handler;
     }
 
     /**
@@ -153,7 +168,7 @@ class App {
      */
     public function delete(string $path, callable $handler) {
         $r = self::fastrouteToRegexp($this->pathPrefix . $path);
-        $this->handlers["delete"][$r] = $handler;
+        $this->handlers[$r]["delete"] = $handler;
     }
 
     /**
@@ -169,7 +184,7 @@ class App {
      */
     public function get(string $path, callable $handler) {
         $r = self::fastrouteToRegexp($this->pathPrefix . $path);
-        $this->handlers["get"][$r] = $handler;
+        $this->handlers[$r]["get"] = $handler;
     }
 
     /**
@@ -201,7 +216,7 @@ class App {
      */
     public function head(string $path, callable $handler) {
         $r = self::fastrouteToRegexp($this->pathPrefix . $path);
-        $this->handlers["head"][$r] = $handler;
+        $this->handlers[$r]["head"] = $handler;
     }
 
     /**
@@ -219,7 +234,7 @@ class App {
     public function map(array $methods, string $path, callable $handler) {
         $r = self::fastrouteToRegexp($this->pathPrefix . $path);
         foreach($methods as $m) {
-            $this->handlers[strtolower($m)][$r] = $handler;
+            $this->handlers[$r][strtolower($m)] = $handler;
         }
     }
 
@@ -236,7 +251,7 @@ class App {
      */
     public function options(string $path, callable $handler) {
         $r = self::fastrouteToRegexp($this->pathPrefix . $path);
-        $this->handlers["options"][$r] = $handler;
+        $this->handlers[$r]["options"] = $handler;
     }
 
     /**
@@ -252,7 +267,7 @@ class App {
      */
     public function post(string $path, callable $handler) {
         $r = self::fastrouteToRegexp($this->pathPrefix . $path);
-        $this->handlers["post"][$r] = $handler;
+        $this->handlers[$r]["post"] = $handler;
     }
 
     /**
@@ -268,7 +283,7 @@ class App {
      */
     public function put(string $path, callable $handler) {
         $r = self::fastrouteToRegexp($this->pathPrefix . $path);
-        $this->handlers["put"][$r] = $handler;
+        $this->handlers[$r]["put"] = $handler;
     }
 
     /**
@@ -297,17 +312,40 @@ class App {
             $this->config["phpErrorHandler"]() :
             $default_error_handler;
 
+        $method_not_allowed_handler = $this->config["notAllowedHandler"] ?
+            $this->config["notAllowedHandler"]() :
+            function($request, $response, $methods) {
+                $response->getBody()->write(
+                    "Method not allowed, supported methods are: " .
+                    implode(", ", $methods)
+                );
+                return $response->withStatus(405)->withHeader("Content-Type", "text/plain");
+            };
+        $not_found_handler = $this->config["notFoundHandler"] ?
+            $this->config["notFoundHandler"]() :
+            function($request, $response, $methods) {
+                $response->getBody()->write("Not found");
+                return $response->withStatus(404)->withHeader("Content-Type", "text/plain");
+            };
+
         if($request->getMethod() == "HEAD") {
             $matching_methods = [strtolower($request->getMethod()), "get", "any"];
         } else {
             $matching_methods = [strtolower($request->getMethod()), "any"];
         }
-        foreach(
-            array_intersect($matching_methods, array_keys($this->handlers)) as $method
-        ) {
-            $path_handler = $this->handlers[$method];
-            foreach($path_handler as $path => $handler) {
-                if(preg_match($path, $target_path, $md)) {
+        $allowed_methods = [];
+        foreach($this->handlers as $path => $method_handler) {
+            if(preg_match($path, $target_path, $md)) {
+                $allowed_methods = array_merge(
+                    $allowed_methods,
+                    array_keys($method_handler)
+                );
+                $methods = array_intersect(
+                    $matching_methods,
+                    array_keys($method_handler)
+                );
+                if($methods) {
+                    $handler = $method_handler[array_values($methods)[0]];
                     try {
                         $new_response = $handler(
                             $request,
@@ -328,9 +366,21 @@ class App {
                 }
             }
         }
-        throw new \Exception(
-            "Handler not found for {$request->getMethod()} {$request->getUri()->getPath()}"
-        );
+        if($allowed_methods) {
+            $literal_methods = array_map(
+                "strtoupper",
+                $allowed_methods
+            );
+            if(in_array("GET", $literal_methods) and !in_array("HEAD", $literal_methods)) {
+                $literal_methods[] = "HEAD";
+            }
+            sort($literal_methods);
+            $new_response = $method_not_allowed_handler($request, $response, $literal_methods);
+            $this->sendResponse($new_response ?? $response);
+        } else {
+            $new_response = $not_found_handler($request, $response);
+            $this->sendResponse($new_response ?? $response);
+        }
     }
 
     /**

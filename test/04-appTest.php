@@ -148,6 +148,28 @@ class AppTest extends \PHPUnit\Framework\TestCase {
                     ]);
                 };
             },
+            "notAllowedHandler" => function() {
+                return function(
+                    ServerRequestInterface $request,
+                    ResponseInterface $response,
+                    array $methods
+                ) {
+                    return $response->withJson([
+                        "type" => "notallowed",
+                        "methods" => $methods,
+                    ]);
+                };
+            },
+            "notFoundHandler" => function() {
+                return function(
+                    ServerRequestInterface $request,
+                    ResponseInterface $response
+                ) {
+                    return $response->withJson([
+                        "type" => "notfound",
+                    ]);
+                };
+            },
             "phpErrorHandler" => function() {
                 return function(
                     ServerRequestInterface $request,
@@ -176,6 +198,16 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             ["type" => "error"],
             json_decode($this->runRequest($app, "GET", "/error"), true),
             "phpErrorHandler: works"
+        );
+        $this->assertSame(
+            ["type" => "notfound"],
+            json_decode($this->runRequest($app, "GET", "/notfound"), true),
+            "notFoundHandler: works"
+        );
+        $this->assertSame(
+            ["type" => "notallowed", "methods" => ["GET", "HEAD"]],
+            json_decode($this->runRequest($app, "POST", "/exception"), true),
+            "notAllowedHandler: works"
         );
     }
 }
