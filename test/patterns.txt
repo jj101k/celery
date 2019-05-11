@@ -1,0 +1,7 @@
+/
+/alpha
+/alpha/bravo
+/alpha/bravo.charlie
+/alpha/bravo/[{charlie}]
+/alpha/bravo/{charlie:[0-9a-f]+|%2f}
+/alpha/{bravo}/charlie/{delta:\d+}/echo/{foxtrot:golf|hotel}
