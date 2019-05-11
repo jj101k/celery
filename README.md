@@ -23,6 +23,11 @@ cost down. This comes down to three basic decisions:
 
 3. Avoid any wildly inefficient algorithms.
 
+# Caveats
+
+If you're starting PHP from scratch each time, that in itself adds about 70ms.
+In general that shouldn't apply to daemon-based environments like `php-fpm`.
+
 # Compatibility
 
 The following should be compatibile with typical use-cases in Slim:
