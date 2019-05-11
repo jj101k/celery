@@ -75,9 +75,9 @@ class TimingTest extends \PHPUnit\Framework\TestCase {
 
         ob_end_flush();
         $this->assertLessThan(
-            0.002,
+            0.004,
             $r,
-            "All handling complete in < 2ms"
+            "All handling complete in < 4ms"
         );
     }
 }
