@@ -92,4 +92,38 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             "OPTIONS /e/eff: as expected"
         );
     }
+
+    /**
+     * This is an approximation of the Slim tutorial
+     */
+    public function testHelloWorld() {
+        $app = new \Celery\App();
+        $app->get(
+            "/hello/{name}",
+            function(
+                \Psr\Http\Message\ServerRequestInterface $request,
+                \Psr\Http\Message\ResponseInterface $response,
+                array $args
+            ) {
+                $response->getBody()->write("Hello {$args["name"]}");
+
+                return $response;
+            }
+        );
+        $written = "";
+        ob_start(function($buffer) use (&$written) {
+            $written .= $buffer;
+            return "";
+        });
+        $app->run([
+            "REQUEST_METHOD" => "GET",
+            "REQUEST_URI" => "/hello/world",
+        ]);
+        ob_end_flush();
+        $this->assertSame(
+            "Hello world",
+            $written,
+            "Simple body worked as expected"
+        );
+    }
 }
