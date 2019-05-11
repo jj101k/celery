@@ -10,11 +10,17 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
     private $body;
 
     /**
+     * @property array Maps canonicalised headers to their original
+     *  representation
+     */
+    private $headerIdentities = [];
+
+    /**
      * @property array {
      *  @var string[] $(header_name)
      * }
      */
-    private $headers;
+    private $headers = [];
 
     /**
      * @property string
@@ -39,13 +45,12 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function getHeader($name) {
-        $m = "/^" . preg_replace("#/#", "\\x2f", quotemeta($name)) . "$/i";
-        foreach($this->headers as $header_name => $values) {
-            if(preg_match($m, $header_name)) {
-                return $values;
-            }
+        $cname = @$this->headerIdentities[strtoupper($name)];
+        if($cname) {
+            return $this->headers[$cname];
+        } else {
+            return [];
         }
-        return [];
     }
 
     /**
@@ -73,13 +78,8 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function hasHeader($name) {
-        $m = "/^" . preg_replace("#/#", "\\x2f", quotemeta($name)) . "$/i";
-        foreach(array_keys($this->headers) as $header_name) {
-            if(preg_match($m, $header_name)) {
-                return true;
-            }
-        }
-        return false;
+        $cname = @$this->headerIdentities[strtoupper($name)];
+        return !!$cname;
     }
 
     /**
@@ -87,16 +87,16 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      */
     public function withAddedHeader($name, $value) {
         $new = clone($this);
-        if(is_array($value)) {
-            $new->headers[$name] = array_merge( // <-- NAME
-                $this->getHeaders($name),
-                $value
+        $cvalue = is_array($value) ? $value : [$value];
+        $cname = @$new->headerIdentities[strtoupper($name)];
+        if($cname) {
+            $new->headers[$cname] = array_merge(
+                $new->headers[$cname],
+                $cvalue
             );
         } else {
-            $new->headers[$name] = array_merge(
-                $this->getHeaders($name),
-                [$value]
-            );
+            $new->headerIdentities[strtoupper($name)] = $name;
+            $new->headers[$name] = $cvalue;
         }
         return $new;
     }
@@ -115,10 +115,13 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      */
     public function withHeader($name, $value) {
         $new = clone($this);
-        if(is_array($value)) {
-            $new->headers[$name] = $value;
+        $cvalue = is_array($value) ? $value : [$value];
+        $cname = @$new->headerIdentities[strtoupper($name)];
+        if($cname) {
+            $new->headers[$cname] = $cvalue;
         } else {
-            $new->headers[$name] = [$value];
+            $new->headerIdentities[strtoupper($name)] = $name;
+            $new->headers[$name] = $cvalue;
         }
         return $new;
     }
@@ -128,12 +131,10 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      */
     public function withoutHeader($name) {
         $new = clone($this);
-        $m = "/^" . preg_replace("#/#", "\\x2f", quotemeta($name)) . "$/i";
-        foreach(array_keys($this->headers) as $header_name) {
-            if(preg_match($m, $header_name)) {
-                unset($this->headers[$name]);
-                return $new;
-            }
+        $cname = @$new->headerIdentities[strtoupper($name)];
+        if($cname) {
+            unset($new->headers[$cname]);
+            unset($new->headerIdentities[strtoupper($name)]);
         }
         return $new;
     }
