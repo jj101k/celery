@@ -1,5 +1,7 @@
 <?php
 require_once "vendor/autoload.php";
+use \Psr\Http\Message\ServerRequestInterface;
+use \Psr\Http\Message\ResponseInterface;
 /**
  * Tests the main app object for Slim compatibility
  */
@@ -11,8 +13,8 @@ class AppTest extends \PHPUnit\Framework\TestCase {
         $app = new \Celery\App();
         $handler_for = function(string $method) {
             return function(
-                \Psr\Http\Message\ServerRequestInterface $req,
-                \Psr\Http\Message\ResponseInterface $res,
+                ServerRequestInterface $req,
+                ResponseInterface $res,
                 array $args
             ) use (
                 $method
@@ -107,8 +109,8 @@ class AppTest extends \PHPUnit\Framework\TestCase {
         $app->get(
             "/hello/{name}",
             function(
-                \Psr\Http\Message\ServerRequestInterface $request,
-                \Psr\Http\Message\ResponseInterface $response,
+                ServerRequestInterface $request,
+                ResponseInterface $response,
                 array $args
             ) {
                 $response->getBody()->write("Hello {$args["name"]}");
