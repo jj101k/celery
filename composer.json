@@ -1,7 +1,21 @@
 {
     "name": "jdriscoll/celery",
     "description": "A very lightweight implementation of PSR-7",
+    "license": "BSD-2-Clause",
     "require": {
-        "php": "^7.1"
+        "php": "^7.1",
+	"psr/http-message": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Celery\\": "lib/Celery/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit test"
+    },
+    "require-dev": {
+        "nikic/fast-route": "^1.2",
+        "phpunit/phpunit": "^7.0"
     }
 }
