@@ -324,7 +324,7 @@ class App {
             };
         $not_found_handler = $this->config["notFoundHandler"] ?
             $this->config["notFoundHandler"]() :
-            function($request, $response, $methods) {
+            function($request, $response) {
                 $response->getBody()->write("Not found");
                 return $response->withStatus(404)->withHeader("Content-Type", "text/plain");
             };
