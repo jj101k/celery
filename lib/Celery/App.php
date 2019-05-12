@@ -204,6 +204,102 @@ class App {
     }
 
     /**
+     * Handles the supplied request object, including all error handling. You
+     * can use this if you have a ServerRequest built elsewhere.
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return \Psr\Http\Message\ResponseInterface
+     */
+    public function handleRequest(
+        \Psr\Http\Message\ServerRequestInterface $request
+    ): \Psr\Http\Message\ResponseInterface {
+        $response = new \Celery\Response();
+        $target_method = strtolower($request->getMethod());
+        $target_path = $request->getUri()->getPath();
+
+        $default_error_handler = function($request, $response, $exception) {
+            trigger_error($exception);
+            $response->getBody()->write("Internal Server Error");
+            return $response->withStatus(500)->withHeader("Content-Type", "text/plain");
+        };
+        $exception_handler = $this->config["errorHandler"] ?
+            $this->config["errorHandler"]() :
+            $default_error_handler;
+
+        $error_handler = $this->config["phpErrorHandler"] ?
+            $this->config["phpErrorHandler"]() :
+            $default_error_handler;
+
+        $method_not_allowed_handler = $this->config["notAllowedHandler"] ?
+            $this->config["notAllowedHandler"]() :
+            function($request, $response, $methods) {
+                $response->getBody()->write(
+                    "Method not allowed, supported methods are: " .
+                    implode(", ", $methods)
+                );
+                return $response->withStatus(405)->withHeader("Content-Type", "text/plain");
+            };
+        $not_found_handler = $this->config["notFoundHandler"] ?
+            $this->config["notFoundHandler"]() :
+            function($request, $response) {
+                $response->getBody()->write("Not found");
+                return $response->withStatus(404)->withHeader("Content-Type", "text/plain");
+            };
+
+        if($request->getMethod() == "HEAD") {
+            $matching_methods = [strtolower($request->getMethod()), "get", "any"];
+        } else {
+            $matching_methods = [strtolower($request->getMethod()), "any"];
+        }
+        $allowed_methods = [];
+        foreach($this->handlers as $path => $method_handler) {
+            if(preg_match($path, $target_path, $md)) {
+                $allowed_methods = array_merge(
+                    $allowed_methods,
+                    array_keys($method_handler)
+                );
+                $methods = array_intersect(
+                    $matching_methods,
+                    array_keys($method_handler)
+                );
+                if($methods) {
+                    $handler = $method_handler[array_values($methods)[0]];
+                    try {
+                        $new_response = $handler(
+                            $request,
+                            $response,
+                            array_filter(
+                                $md,
+                                function($k) {return !is_numeric($k);},
+                                ARRAY_FILTER_USE_KEY
+                            )
+                        );
+                    } catch(\Exception $e) {
+                        $new_response = $exception_handler($request, $response, $e);
+                    } catch(\Error $e) {
+                        $new_response = $error_handler($request, $response, $e);
+                    }
+                    return $new_response ?? $response;
+                }
+            }
+        }
+        if($allowed_methods) {
+            $literal_methods = array_map(
+                "strtoupper",
+                $allowed_methods
+            );
+            if(in_array("GET", $literal_methods) and !in_array("HEAD", $literal_methods)) {
+                $literal_methods[] = "HEAD";
+            }
+            sort($literal_methods);
+            $new_response = $method_not_allowed_handler($request, $response, $literal_methods);
+        } else {
+            $new_response = $not_found_handler($request, $response);
+        }
+        return $new_response ?? $response;
+    }
+
+    /**
      * Adds a handler for HEAD requests on a path
      *
      * @param string $path eg. "/a"
@@ -296,94 +392,9 @@ class App {
         $request = (new \Celery\ServerRequest())
             ->withServerParams($server_params ?? $_SERVER)
             ->withUploadedFiles($_FILES);
-        $response = new \Celery\Response();
-        $target_method = strtolower($request->getMethod());
-        $target_path = $request->getUri()->getPath();
-
-        $default_error_handler = function($request, $response, $exception) {
-            trigger_error($exception);
-            $response->getBody()->write("Internal Server Error");
-            return $response->withStatus(500)->withHeader("Content-Type", "text/plain");
-        };
-        $exception_handler = $this->config["errorHandler"] ?
-            $this->config["errorHandler"]() :
-            $default_error_handler;
-
-        $error_handler = $this->config["phpErrorHandler"] ?
-            $this->config["phpErrorHandler"]() :
-            $default_error_handler;
-
-        $method_not_allowed_handler = $this->config["notAllowedHandler"] ?
-            $this->config["notAllowedHandler"]() :
-            function($request, $response, $methods) {
-                $response->getBody()->write(
-                    "Method not allowed, supported methods are: " .
-                    implode(", ", $methods)
-                );
-                return $response->withStatus(405)->withHeader("Content-Type", "text/plain");
-            };
-        $not_found_handler = $this->config["notFoundHandler"] ?
-            $this->config["notFoundHandler"]() :
-            function($request, $response) {
-                $response->getBody()->write("Not found");
-                return $response->withStatus(404)->withHeader("Content-Type", "text/plain");
-            };
-
-        if($request->getMethod() == "HEAD") {
-            $matching_methods = [strtolower($request->getMethod()), "get", "any"];
-        } else {
-            $matching_methods = [strtolower($request->getMethod()), "any"];
-        }
-        $allowed_methods = [];
-        foreach($this->handlers as $path => $method_handler) {
-            if(preg_match($path, $target_path, $md)) {
-                $allowed_methods = array_merge(
-                    $allowed_methods,
-                    array_keys($method_handler)
-                );
-                $methods = array_intersect(
-                    $matching_methods,
-                    array_keys($method_handler)
-                );
-                if($methods) {
-                    $handler = $method_handler[array_values($methods)[0]];
-                    try {
-                        $new_response = $handler(
-                            $request,
-                            $response,
-                            array_filter(
-                                $md,
-                                function($k) {return !is_numeric($k);},
-                                ARRAY_FILTER_USE_KEY
-                            )
-                        );
-                    } catch(\Exception $e) {
-                        $new_response = $exception_handler($request, $response, $e);
-                    } catch(\Error $e) {
-                        $new_response = $error_handler($request, $response, $e);
-                    }
-                    if(!$silent) {
-                        $this->sendResponse($new_response ?? $response);
-                    }
-                    return;
-                }
-            }
-        }
-        if($allowed_methods) {
-            $literal_methods = array_map(
-                "strtoupper",
-                $allowed_methods
-            );
-            if(in_array("GET", $literal_methods) and !in_array("HEAD", $literal_methods)) {
-                $literal_methods[] = "HEAD";
-            }
-            sort($literal_methods);
-            $new_response = $method_not_allowed_handler($request, $response, $literal_methods);
-        } else {
-            $new_response = $not_found_handler($request, $response);
-        }
+        $response = $this->handleRequest($request, $silent);
         if(!$silent) {
-            $this->sendResponse($new_response ?? $response);
+            $this->sendResponse($response);
         }
     }
 
