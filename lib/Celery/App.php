@@ -389,9 +389,12 @@ class App {
      * @param array|null $server_params Mostly for testing
      */
     public function run(bool $silent = false, ?array $server_params = null) {
+        $body = new \Celery\Body();
+        $body->write(file_get_contents("php://input"));
         $request = (new \Celery\ServerRequest())
             ->withServerParams($server_params ?? $_SERVER)
-            ->withUploadedFiles($_FILES);
+            ->withUploadedFiles($_FILES)
+            ->withBody($body);
         $response = $this->handleRequest($request, $silent);
         if(!$silent) {
             $this->sendResponse($response);
