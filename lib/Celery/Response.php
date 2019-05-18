@@ -57,6 +57,7 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
 
             $this->setAddedHeader($name, $content);
         }
+        $headers = preg_replace("/^\r\n$/", "", $headers);
         if($headers) {
             trigger_error("Left-over garbage: {$headers}");
         }
