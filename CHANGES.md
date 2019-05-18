@@ -12,3 +12,8 @@
 ## 1.0.2
 
 - Response/Body support for streaming an HTTP envelope as provided by an iterator
+
+## 1.0.3
+
+- Testfix: Correct spurious warning about end-of-headers where the
+header string includes a trailing empty line `"\r\n\r\n"`
