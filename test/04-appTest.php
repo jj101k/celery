@@ -289,4 +289,74 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             "notAllowedHandler: produces 405 error"
         );
     }
+    /**
+     * Tests the behaviour with no config (where config would override it)
+     */
+    public function testNoConfig() {
+        $app = $this
+            ->getMockBuilder("\Celery\App")
+            ->setMethods(["sendHeaders"])
+            ->getMock();
+
+        \Celery\App::$SILENT_EXCEPTIONS = true;
+
+        $saved_greeting = null;
+        $saved_headers = null;
+
+        $app->method("sendHeaders")->will(
+            $this->returnCallback(function(
+                string $greeting,
+                array $headers
+            ) use (
+                &$saved_greeting,
+                &$saved_headers
+            ) {
+                $saved_greeting = $greeting;
+                $saved_headers = $headers;
+            })
+        );
+        $app->get("/exception", function() {
+            throw new \Exception("foo");
+        });
+        $app->get("/error", function() {
+            return $foo->bar();
+        });
+
+        $this->assertNotEmpty(
+            $this->runRequest($app, "GET", "/exception"),
+            "errorHandler (default): works"
+        );
+        $this->assertRegexp(
+            "#^HTTP/1.1 500#",
+            $saved_greeting,
+            "errorHandler (default): produces 500 error"
+        );
+        $this->assertNotEmpty(
+            $this->runRequest($app, "GET", "/error"),
+            "phpErrorHandler (default): works"
+        );
+        $this->assertRegexp(
+            "#^HTTP/1.1 500#",
+            $saved_greeting,
+            "phpErrorHandler (default): produces 500 error"
+        );
+        $this->assertNotEmpty(
+            $this->runRequest($app, "GET", "/notfound"),
+            "notFoundHandler (default): works"
+        );
+        $this->assertRegexp(
+            "#^HTTP/1.1 404#",
+            $saved_greeting,
+            "notFoundHandler (default): produces 404 error"
+        );
+        $this->assertNotEmpty(
+            $this->runRequest($app, "POST", "/exception"),
+            "notAllowedHandler (default): works"
+        );
+        $this->assertRegexp(
+            "#^HTTP/1.1 405#",
+            $saved_greeting,
+            "notAllowedHandler (default): produces 405 error"
+        );
+    }
 }
