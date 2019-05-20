@@ -23,7 +23,7 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
      * Fetches the HTTP headers from the iterator. This will rewrite relevant
      * parts of the object.
      */
-    private function getFirstLine() {
+    protected function getFirstLine() {
         // Remove it
         $iterator = $this->iterator;
         $this->iterator = null;
@@ -72,7 +72,7 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
      * @param iterable<string>|null $iterator
      */
     public function __construct(?iterable $iterator = null) {
-        parent::__construct();
+        parent::__construct($iterator ? [$this, "getFirstLine"] : null);
         $this->iterator = $iterator;
         if(!$iterator) {
             $this->setAddedHeader("Content-Type", "text/html");
@@ -83,8 +83,8 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
      * @inheritdoc
      */
     public function getReasonPhrase() {
-        if($this->iterator) {
-            $this->getFirstLine();
+        if($this->beforeFirstUse) {
+            $this->firstUse();
         }
         return $this->reasonPhrase;
     }
@@ -93,8 +93,8 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
      * @inheritdoc
      */
     public function getStatusCode() {
-        if($this->iterator) {
-            $this->getFirstLine();
+        if($this->beforeFirstUse) {
+            $this->firstUse();
         }
         return $this->statusCode;
     }
@@ -112,6 +112,9 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
         int $http_code = 200,
         int $encode_options = 0
     ) {
+        if($this->beforeFirstUse) {
+            $this->firstUse();
+        }
         $encoded_content = json_encode($content, $encode_options);
 
         $body = new \Celery\Body();
@@ -123,79 +126,9 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
      * @inheritdoc
      */
     public function withStatus($code, $reasonPhrase = '') {
-        $new = clone($this);
+        $new = $this->clone();
         $new->statusCode = $code;
         $new->reasonPhrase = $reasonPhrase;
         return $new;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getBody() {
-        if($this->iterator) {
-            $this->getFirstLine();
-        }
-        return parent::getBody();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function withHeader($name, $value) {
-        if($this->iterator) {
-            $this->getFirstLine();
-        }
-        return parent::withHeader($name, $value);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function withoutHeader($name) {
-        if($this->iterator) {
-            $this->getFirstLine();
-        }
-        return parent::withoutHeader($name);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getHeader($name) {
-        if($this->iterator) {
-            $this->getFirstLine();
-        }
-        return parent::getHeader($name);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getHeaders() {
-        if($this->iterator) {
-            $this->getFirstLine();
-        }
-        return parent::getHeaders();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getProtocolVersion() {
-        if($this->iterator) {
-            $this->getFirstLine();
-        }
-        return parent::getProtocolVersion();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function hasHeader($name) {
-        if($this->iterator) {
-            $this->getFirstLine();
-        }
-        return parent::hasHeader($name);
     }
 }

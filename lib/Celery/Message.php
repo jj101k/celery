@@ -5,6 +5,11 @@ namespace Celery;
  */
 abstract class Message implements \Psr\Http\Message\MessageInterface {
     /**
+     * @property callable|null
+     */
+    protected $beforeFirstUse;
+
+    /**
      * @property \Psr\Http\Message\StreamInterface
      */
     protected $body;
@@ -28,6 +33,29 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
     protected $protocolVersion;
 
     /**
+     * Returns a clone, triggering beforeFirstUse if it exists
+     *
+     * @return static
+     */
+    protected function clone() {
+        if($this->beforeFirstUse) {
+            $this->firstUse();
+        }
+        return clone($this);
+    }
+
+    /**
+     * Runs the beforeFirstUse handler, and removes it.
+     *
+     * @return void
+     */
+    protected function firstUse(): void {
+        $handler = $this->beforeFirstUse;
+        $this->beforeFirstUse = null;
+        call_user_func($handler);
+    }
+
+    /**
      * Adds a header value in place
      *
      * @param string $name
@@ -47,8 +75,12 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
 
     /**
      * Builds the object
+     *
+     * @param callable|null $before_first_use If set, this will be called before
+     *  the first property is fetched or before the object is cloned.
      */
-    public function __construct() {
+    public function __construct(?callable $before_first_use) {
+        $this->beforeFirstUse = $before_first_use;
         $this->body = new \Celery\Body();
     }
 
@@ -56,6 +88,9 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function getBody() {
+        if($this->beforeFirstUse) {
+            $this->firstUse();
+        }
         return $this->body;
     }
 
@@ -63,6 +98,9 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function getHeader($name) {
+        if($this->beforeFirstUse) {
+            $this->firstUse();
+        }
         $cname = @$this->headerIdentities[strtoupper($name)];
         if($cname) {
             return $this->headers[$cname];
@@ -82,6 +120,9 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function getHeaders() {
+        if($this->beforeFirstUse) {
+            $this->firstUse();
+        }
         return $this->headers;
     }
 
@@ -89,6 +130,9 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function getProtocolVersion() {
+        if($this->beforeFirstUse) {
+            $this->firstUse();
+        }
         return $this->protocolVersion;
     }
 
@@ -96,6 +140,9 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function hasHeader($name) {
+        if($this->beforeFirstUse) {
+            $this->firstUse();
+        }
         $cname = @$this->headerIdentities[strtoupper($name)];
         return !!$cname;
     }
@@ -104,7 +151,7 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function withAddedHeader($name, $value) {
-        $new = clone($this);
+        $new = $this->clone();
         return $new->setAddedHeader($name, $value);
     }
 
@@ -112,7 +159,7 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function withBody(\Psr\Http\Message\StreamInterface $body) {
-        $new = clone($this);
+        $new = $this->clone();
         $new->body = $body;
         return $new;
     }
@@ -121,7 +168,7 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function withHeader($name, $value) {
-        $new = clone($this);
+        $new = $this->clone();
         $cvalue = is_array($value) ? $value : [$value];
         $cname = @$new->headerIdentities[strtoupper($name)];
         if($cname) {
@@ -137,7 +184,7 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function withoutHeader($name) {
-        $new = clone($this);
+        $new = $this->clone();
         $cname = @$new->headerIdentities[strtoupper($name)];
         if($cname) {
             unset($new->headers[$cname]);
@@ -150,7 +197,7 @@ abstract class Message implements \Psr\Http\Message\MessageInterface {
      * @inheritdoc
      */
     public function withProtocolVersion($version) {
-        $new = clone($this);
+        $new = $this->clone();
         $new->protocolVersion = $version;
         return $new;
     }
