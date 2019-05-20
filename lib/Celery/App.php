@@ -6,11 +6,6 @@ namespace Celery;
  */
 class App {
     /**
-     * @var bool This can be overridden during testing
-     */
-    public static $SILENT_EXCEPTIONS = false;
-
-    /**
      * @var array {
      *  @var string $(http_status_code)
      * }
@@ -262,9 +257,7 @@ class App {
         $target_path = $request->getUri()->getPath();
 
         $default_error_handler = function($request, $response, $exception) {
-            if(!self::$SILENT_EXCEPTIONS) {
-                trigger_error($exception);
-            }
+            trigger_error($exception);
             $response->getBody()->write("Internal Server Error");
             return $response->withStatus(500)->withHeader("Content-Type", "text/plain");
         };

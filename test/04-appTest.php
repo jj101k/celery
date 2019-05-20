@@ -298,8 +298,6 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             ->setMethods(["sendHeaders"])
             ->getMock();
 
-        \Celery\App::$SILENT_EXCEPTIONS = true;
-
         $saved_greeting = null;
         $saved_headers = null;
 
@@ -323,7 +321,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
         });
 
         $this->assertNotEmpty(
-            $this->runRequest($app, "GET", "/exception"),
+            @$this->runRequest($app, "GET", "/exception"),
             "errorHandler (default): works"
         );
         $this->assertRegexp(
@@ -332,7 +330,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             "errorHandler (default): produces 500 error"
         );
         $this->assertNotEmpty(
-            $this->runRequest($app, "GET", "/error"),
+            @$this->runRequest($app, "GET", "/error"),
             "phpErrorHandler (default): works"
         );
         $this->assertRegexp(
