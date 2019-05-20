@@ -185,7 +185,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
                         ) {
                             return $response->withJson([
                                 "type" => "exception",
-                            ]);
+                            ], 500);
                         };
                     },
                     "notAllowedHandler" => function() {
@@ -197,7 +197,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
                             return $response->withJson([
                                 "type" => "notallowed",
                                 "methods" => $methods,
-                            ]);
+                            ], 405);
                         };
                     },
                     "notFoundHandler" => function() {
@@ -207,7 +207,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
                         ) {
                             return $response->withJson([
                                 "type" => "notfound",
-                            ]);
+                            ], 404);
                         };
                     },
                     "phpErrorHandler" => function() {
@@ -218,15 +218,28 @@ class AppTest extends \PHPUnit\Framework\TestCase {
                         ) {
                             return $response->withJson([
                                 "type" => "error",
-                            ]);
+                            ], 500);
                         };
                     },
                 ]
             ])
             ->getMock();
 
+
+        $saved_greeting = null;
+        $saved_headers = null;
+
         $app->method("sendHeaders")->will(
-            $this->returnCallback(function() {})
+            $this->returnCallback(function(
+                string $greeting,
+                array $headers
+            ) use (
+                &$saved_greeting,
+                &$saved_headers
+            ) {
+                $saved_greeting = $greeting;
+                $saved_headers = $headers;
+            })
         );
         $app->get("/exception", function() {
             throw new \Exception("foo");
@@ -240,20 +253,40 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             json_decode($this->runRequest($app, "GET", "/exception"), true),
             "errorHandler: works"
         );
+        $this->assertRegexp(
+            "#^HTTP/1.1 500#",
+            $saved_greeting,
+            "errorHandler: produces 500 error"
+        );
         $this->assertSame(
             ["type" => "error"],
             json_decode($this->runRequest($app, "GET", "/error"), true),
             "phpErrorHandler: works"
+        );
+        $this->assertRegexp(
+            "#^HTTP/1.1 500#",
+            $saved_greeting,
+            "phpErrorHandler: produces 500 error"
         );
         $this->assertSame(
             ["type" => "notfound"],
             json_decode($this->runRequest($app, "GET", "/notfound"), true),
             "notFoundHandler: works"
         );
+        $this->assertRegexp(
+            "#^HTTP/1.1 404#",
+            $saved_greeting,
+            "notFoundHandler: produces 404 error"
+        );
         $this->assertSame(
             ["type" => "notallowed", "methods" => ["GET", "HEAD"]],
             json_decode($this->runRequest($app, "POST", "/exception"), true),
             "notAllowedHandler: works"
+        );
+        $this->assertRegexp(
+            "#^HTTP/1.1 405#",
+            $saved_greeting,
+            "notAllowedHandler: produces 405 error"
         );
     }
 }
