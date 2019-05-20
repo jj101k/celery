@@ -6,6 +6,31 @@ namespace Celery;
  */
 class App {
     /**
+     * @var array {
+     *  @var string $(http_status_code)
+     * }
+     */
+    const REASON_PHRASES = [
+        100 => "Continue",
+        200 => "OK",
+        201 => "Created",
+        301 => "Moved Permanently",
+        302 => "Found",
+        303 => "See Other",
+        307 => "Temporary Redirect",
+        308 => "Permanent Redirect",
+        400 => "Bad Request",
+        401 => "Unauthorized",
+        403 => "Forbidden",
+        404 => "Not Found",
+        405 => "Method Not Allowed",
+        500 => "Internal Server Error",
+        502 => "Bad Gateway",
+        503 => "Service Unavailable",
+        504 => "Gateway Timeout",
+    ];
+
+    /**
      * @property array See __construct()
      */
     private $config;
@@ -96,6 +121,20 @@ class App {
             $boxed
         );
         return $unescaped;
+    }
+
+    /**
+     * Sends the response headers to the client, including the HTTP greeting
+     *
+     * @param string $greeting eg. "HTTP/1.1 200 OK"
+     * @param string[] $headers eg. ["Content-Type: text/html"]
+     */
+    protected function sendHeaders(string $greeting, array $headers) {
+        header($greeting);
+
+        foreach($headers as $header) {
+            header($header);
+        }
     }
 
     /**
@@ -407,6 +446,20 @@ class App {
      * @param \Psr\Http\Message\ResponseInterface $response
      */
     public function sendResponse(\Psr\Http\Message\ResponseInterface $response) {
+        $headers = [];
+        foreach($response->getHeaders() as $name => $values) {
+            foreach($values as $value) {
+                $headers[] = "{$name}: {$value}";
+            }
+        }
+        $reason_phrase =
+            $response->getReasonPhrase() ?:
+            @self::REASON_PHRASES[$response->getStatusCode()] ??
+            "-";
+        $this->sendHeaders(
+            "HTTP/1.1 {$response->getStatusCode()} {$reason_phrase}",
+            $headers
+        );
         echo $response->getBody();
     }
 }

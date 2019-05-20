@@ -31,7 +31,23 @@ class AppTest extends \PHPUnit\Framework\TestCase {
      * These are the basic things you'd do, including get() and run().
      */
     public function testHandlers() {
-        $app = new \Celery\App();
+        $app = $this
+            ->getMockBuilder("\Celery\App")
+            ->setMethods(["sendHeaders"])
+            ->getMock();
+
+        $saved_greeting = null;
+
+        $app->method("sendHeaders")->will(
+            $this->returnCallback(function(
+                string $greeting,
+                array $headers
+            ) use (
+                &$saved_greeting
+            ) {
+                $saved_greeting = $greeting;
+            })
+        );
         $handler_for = function(string $method) {
             return function(
                 ServerRequestInterface $req,
@@ -73,6 +89,11 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             json_decode($this->runRequest($app, "GET", "/a"), true),
             "GET /a: as expected"
         );
+        $this->assertRegexp(
+            "#^HTTP/1.1 200#",
+            $saved_greeting,
+            "GET /a: returned a success code"
+        );
         foreach($TEST_METHODS as $method) {
             $http_method = strtoupper($method);
             $this->assertSame(
@@ -113,7 +134,14 @@ class AppTest extends \PHPUnit\Framework\TestCase {
      * This is an approximation of the Slim tutorial
      */
     public function testHelloWorld() {
-        $app = new \Celery\App();
+        $app = $this
+            ->getMockBuilder("\Celery\App")
+            ->setMethods(["sendHeaders"])
+            ->getMock();
+
+        $app->method("sendHeaders")->will(
+            $this->returnCallback(function() {})
+        );
         $app->get(
             "/hello/{name}",
             function(
@@ -136,52 +164,62 @@ class AppTest extends \PHPUnit\Framework\TestCase {
      * Tests the stuff that goes in config (handlers for various things).
      */
     public function testConfig() {
-        $app = new \Celery\App([
-            "errorHandler" => function() {
-                return function(
-                    ServerRequestInterface $request,
-                    ResponseInterface $response,
-                    \Exception $e
-                ) {
-                    return $response->withJson([
-                        "type" => "exception",
-                    ]);
-                };
-            },
-            "notAllowedHandler" => function() {
-                return function(
-                    ServerRequestInterface $request,
-                    ResponseInterface $response,
-                    array $methods
-                ) {
-                    return $response->withJson([
-                        "type" => "notallowed",
-                        "methods" => $methods,
-                    ]);
-                };
-            },
-            "notFoundHandler" => function() {
-                return function(
-                    ServerRequestInterface $request,
-                    ResponseInterface $response
-                ) {
-                    return $response->withJson([
-                        "type" => "notfound",
-                    ]);
-                };
-            },
-            "phpErrorHandler" => function() {
-                return function(
-                    ServerRequestInterface $request,
-                    ResponseInterface $response,
-                    \Error $e
-                ) {
-                    return $response->withJson([
-                        "type" => "error",
-                    ]);
-                };
-            },
-        ]);
+        $app = $this
+            ->getMockBuilder("\Celery\App")
+            ->setMethods(["sendHeaders"])
+            ->setConstructorArgs([
+                [
+                    "errorHandler" => function() {
+                        return function(
+                            ServerRequestInterface $request,
+                            ResponseInterface $response,
+                            \Exception $e
+                        ) {
+                            return $response->withJson([
+                                "type" => "exception",
+                            ]);
+                        };
+                    },
+                    "notAllowedHandler" => function() {
+                        return function(
+                            ServerRequestInterface $request,
+                            ResponseInterface $response,
+                            array $methods
+                        ) {
+                            return $response->withJson([
+                                "type" => "notallowed",
+                                "methods" => $methods,
+                            ]);
+                        };
+                    },
+                    "notFoundHandler" => function() {
+                        return function(
+                            ServerRequestInterface $request,
+                            ResponseInterface $response
+                        ) {
+                            return $response->withJson([
+                                "type" => "notfound",
+                            ]);
+                        };
+                    },
+                    "phpErrorHandler" => function() {
+                        return function(
+                            ServerRequestInterface $request,
+                            ResponseInterface $response,
+                            \Error $e
+                        ) {
+                            return $response->withJson([
+                                "type" => "error",
+                            ]);
+                        };
+                    },
+                ]
+            ])
+            ->getMock();
+
+        $app->method("sendHeaders")->will(
+            $this->returnCallback(function() {})
+        );
         $app->get("/exception", function() {
             throw new \Exception("foo");
         });
