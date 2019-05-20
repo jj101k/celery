@@ -72,8 +72,11 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
      * @param iterable<string>|null $iterator
      */
     public function __construct(?iterable $iterator = null) {
-        $this->iterator = $iterator;
         parent::__construct();
+        $this->iterator = $iterator;
+        if(!$iterator) {
+            $this->setAddedHeader("Content-Type", "text/html");
+        }
     }
 
     /**

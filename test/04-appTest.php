@@ -37,15 +37,18 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             ->getMock();
 
         $saved_greeting = null;
+        $saved_headers = null;
 
         $app->method("sendHeaders")->will(
             $this->returnCallback(function(
                 string $greeting,
                 array $headers
             ) use (
-                &$saved_greeting
+                &$saved_greeting,
+                &$saved_headers
             ) {
                 $saved_greeting = $greeting;
+                $saved_headers = $headers;
             })
         );
         $handler_for = function(string $method) {
@@ -93,6 +96,11 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             "#^HTTP/1.1 200#",
             $saved_greeting,
             "GET /a: returned a success code"
+        );
+        $this->assertRegExp(
+            "#^Content-Type: text/html#mi",
+            implode("\r\n", $saved_headers),
+            "GET /a: Headers include a content type (text/html)"
         );
         foreach($TEST_METHODS as $method) {
             $http_method = strtoupper($method);
