@@ -23,3 +23,8 @@ header string includes a trailing empty line `"\r\n\r\n"`
 - Bug: PUT/POST bodies were missed entirely
 - Bug: HTTP response code and headers were missing
 - Responses now have an initial content type of text/html
+
+## 1.0.5
+
+- Bug: Response objects with iterators were not iterated before some `with*`
+  methods
