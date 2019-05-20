@@ -142,6 +142,26 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
     /**
      * @inheritdoc
      */
+    public function withHeader($name, $value) {
+        if($this->iterator) {
+            $this->getFirstLine();
+        }
+        return parent::withHeader($name, $value);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function withoutHeader($name) {
+        if($this->iterator) {
+            $this->getFirstLine();
+        }
+        return parent::withoutHeader($name);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function getHeader($name) {
         if($this->iterator) {
             $this->getFirstLine();
