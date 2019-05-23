@@ -28,3 +28,7 @@ header string includes a trailing empty line `"\r\n\r\n"`
 
 - Bug: Response objects with iterators were not iterated before some `with*`
   methods
+
+## 1.0.6
+
+- Bug: Query strings were appearing twice in back-end URLs
