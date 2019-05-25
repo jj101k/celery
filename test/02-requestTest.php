@@ -89,6 +89,39 @@ class RequestTest extends \PHPUnit\Framework\TestCase {
         );
     }
     /**
+     * Tests how headers come out
+     */
+    public function testPathInfo() {
+        $r = new \Celery\ServerRequest();
+        $r = $r->withServerParams([
+            "HTTP_HOST" => "example.org",
+            "QUERY_STRING" => "",
+            "REQUEST_URI" => "/foo",
+            "REQUEST_METHOD" => "POST",
+            "CONTENT_TYPE" => "text/plain",
+            "HTTP_X_FORWARDED_FOR" => "127.0.0.1, 127.0.0.2"
+        ]);
+        $this->assertSame(
+            $r->getUri()->getPath(),
+            "/foo",
+            "Path matches in the usual case"
+        );
+        $r = $r->withServerParams([
+            "HTTP_HOST" => "example.org",
+            "PATH_INFO" => "/bar",
+            "QUERY_STRING" => "",
+            "REQUEST_URI" => "/index.php/bar",
+            "REQUEST_METHOD" => "POST",
+            "CONTENT_TYPE" => "text/plain",
+            "HTTP_X_FORWARDED_FOR" => "127.0.0.1, 127.0.0.2"
+        ]);
+        $this->assertSame(
+            $r->getUri()->getPath(),
+            "/bar",
+            "Path matches in the PATH_INFO case"
+        );
+    }
+    /**
      * Makes sure that ports work via withServerParams
      */
     public function testPortDetection() {
