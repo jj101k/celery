@@ -2,10 +2,11 @@
 // This is normally run by test/05-timingTest.php but you can run it yourself
 // for testing.
 require_once "vendor/autoload.php";
+$app_class = @$argv[1] ?: "Celery\App";
 use \Psr\Http\Message\ServerRequestInterface;
 use \Psr\Http\Message\ResponseInterface;
 $paths = explode("\n", file_get_contents("test/patterns.txt"));
-$app = new \Celery\App([
+$app = new $app_class([
     "errorHandler" => function() {
         return function(
             ServerRequestInterface $request,
