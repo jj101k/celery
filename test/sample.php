@@ -58,6 +58,11 @@ foreach($paths as $path) {
         return $response->withJSON([]);
     });
 }
+// This will give you broad compat with Slim's loader if you want to try it
+$_SERVER = [
+    "REQUEST_METHOD" => "GET",
+    "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
+];
 $app->run(false, [
     "REQUEST_METHOD" => "GET",
     "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
