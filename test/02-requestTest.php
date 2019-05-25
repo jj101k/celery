@@ -155,7 +155,7 @@ class RequestTest extends \PHPUnit\Framework\TestCase {
         $r = new \Celery\ServerRequest();
         $r = $r->withServerParams([
             "HTTP_HOST" => "example.org",
-            "QUERY_STRING" => "a=b&c=d",
+            "QUERY_STRING" => "a=b&c=d&e[]=f&e[]=g&h[]=i&j[1]=k&l[m][n]=o",
             "REQUEST_URI" => "/foo?a=b&c=d",
             "REQUEST_METHOD" => "POST",
             "CONTENT_TYPE" => "text/plain",
@@ -163,12 +163,19 @@ class RequestTest extends \PHPUnit\Framework\TestCase {
         ]);
         $this->assertSame(
             $r->getUri()->getQuery(),
-            "a=b&c=d",
+            "a=b&c=d&e[]=f&e[]=g&h[]=i&j[1]=k&l[m][n]=o",
             "Query string retained"
         );
         $this->assertSame(
             $r->getQueryParams(),
-            ["a" => "b", "c" => "d"],
+            [
+                "a" => "b",
+                "c" => "d",
+                "e" => ["f", "g"],
+                "h" => ["i"],
+                "j" => [1 => "k"],
+                "l" => ["m" => ["n" => "o"]],
+            ],
             "Query string decoded correctly"
         );
         $r = $r->withServerParams([
