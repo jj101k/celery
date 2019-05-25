@@ -115,4 +115,37 @@ class RequestTest extends \PHPUnit\Framework\TestCase {
             "Port is null when now supplied"
         );
     }
+    /**
+     * Tests how headers come out
+     */
+    public function testScheme() {
+        $r = new \Celery\ServerRequest();
+        $r = $r->withServerParams([
+            "HTTP_HOST" => "example.org",
+            "QUERY_STRING" => "",
+            "REQUEST_URI" => "/foo",
+            "REQUEST_METHOD" => "POST",
+            "CONTENT_TYPE" => "text/plain",
+            "HTTP_X_FORWARDED_FOR" => "127.0.0.1, 127.0.0.2"
+        ]);
+        $this->assertSame(
+            $r->getUri()->getScheme(),
+            "http",
+            "Scheme matches in the usual case"
+        );
+        $r = $r->withServerParams([
+            "HTTP_HOST" => "example.org",
+            "HTTPS" => "1",
+            "QUERY_STRING" => "",
+            "REQUEST_URI" => "/foo",
+            "REQUEST_METHOD" => "POST",
+            "CONTENT_TYPE" => "text/plain",
+            "HTTP_X_FORWARDED_FOR" => "127.0.0.1, 127.0.0.2"
+        ]);
+        $this->assertSame(
+            $r->getUri()->getScheme(),
+            "https",
+            "Scheme matches in https mode"
+        );
+    }
 }

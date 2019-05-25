@@ -172,7 +172,7 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
         @list($host, $port) = explode(":", $params["HTTP_HOST"]);
         $uri = (new \Celery\Uri())
             ->withFullURL($params["REQUEST_URI"])
-            ->withScheme("http")
+            ->withScheme(@$params["HTTPS"] ? "https" : "http")
             ->withHost($host)
             ->withPort($port)
             ->withQuery($params["QUERY_STRING"]);
