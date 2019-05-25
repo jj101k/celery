@@ -149,6 +149,61 @@ class RequestTest extends \PHPUnit\Framework\TestCase {
         );
     }
     /**
+     * Tests retention of query string info
+     */
+    public function testQueryString() {
+        $r = new \Celery\ServerRequest();
+        $r = $r->withServerParams([
+            "HTTP_HOST" => "example.org",
+            "QUERY_STRING" => "a=b&c=d",
+            "REQUEST_URI" => "/foo?a=b&c=d",
+            "REQUEST_METHOD" => "POST",
+            "CONTENT_TYPE" => "text/plain",
+            "HTTP_X_FORWARDED_FOR" => "127.0.0.1, 127.0.0.2"
+        ]);
+        $this->assertSame(
+            $r->getUri()->getQuery(),
+            "a=b&c=d",
+            "Query string retained"
+        );
+        $this->assertSame(
+            $r->getQueryParams(),
+            ["a" => "b", "c" => "d"],
+            "Query string decoded correctly"
+        );
+        $r = $r->withServerParams([
+            "HTTP_HOST" => "example.org",
+            "QUERY_STRING" => "a=b&c=d",
+            "REQUEST_URI" => "/foo?a=b&c=d",
+            "REQUEST_METHOD" => "POST",
+            "CONTENT_TYPE" => "text/plain",
+            "HTTP_X_FORWARDED_FOR" => "127.0.0.1, 127.0.0.2"
+        ]);
+        $this->assertSame(
+            $r->getUri()->getPath(),
+            "/foo",
+            "Query string in URI: path extracted correctly"
+        );
+        $r = $r->withServerParams([
+            "HTTP_HOST" => "example.org",
+            "QUERY_STRING" => "a=b&c=d",
+            "REQUEST_URI" => "/foo",
+            "REQUEST_METHOD" => "POST",
+            "CONTENT_TYPE" => "text/plain",
+            "HTTP_X_FORWARDED_FOR" => "127.0.0.1, 127.0.0.2"
+        ]);
+        $this->assertSame(
+            $r->getUri()->getPath(),
+            "/foo",
+            "Query string not in URI: path extracted correctly"
+        );
+        $this->assertSame(
+            $r->getUri()->getQuery(),
+            "a=b&c=d",
+            "Query string not in URI: query string retained"
+        );
+    }
+    /**
      * Tests how headers come out
      */
     public function testScheme() {

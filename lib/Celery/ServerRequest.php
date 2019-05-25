@@ -160,6 +160,16 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
     }
 
     /**
+     * @inheritdoc
+     */
+    public function withUri(\Psr\Http\Message\UriInterface $uri, $preserveHost = false) {
+        parse_str($uri->getQuery(), $params);
+        return parent::withUri($uri, $preserveHost)->withQueryParams(
+            $params
+        );
+    }
+
+    /**
      * Imports the given server params (or, if null, those from $_SERVER).
      *
      * @param array|null $params Same format as $_SERVER
