@@ -26,17 +26,6 @@ part of that startup cost down. This comes down to three basic decisions:
 This specifically targets Slim, which experimentally adds about 7ms to that
 startup time.
 
-# Caveats
-
-If you're starting PHP from scratch each time, that in itself adds about 70ms.
-In general that shouldn't apply to daemon-based environments like `php-fpm`.
-
-This won't do anything to mitigate loading costs of any other files you may
-have: you need to manage that yourself.
-
-If your process isn't otherwise only costing a few tens of milliseconds, you're
-not going to see much noticeable benefit.
-
 # Compatibility
 
 The following should be compatibile with typical use-cases in Slim:
@@ -51,9 +40,3 @@ The following should be compatibile with typical use-cases in Slim:
 - run()
 - Error condition handlers (errorHandler, phpErrorHandler, notFoundHandler,
   notAllowedHandler) as added via plain array passed to the constructor
-
-The following are not intended to be supported at the current time:
-
-- patch()
-- Emulating Slim's "container"
-- Overriding `$this` in any closures
