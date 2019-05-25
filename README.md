@@ -28,7 +28,7 @@ startup time.
 
 # Compatibility
 
-The following should be compatibile with typical use-cases in Slim:
+The following should be compatible with typical use-cases in Slim:
 
 - any()
 - delete()
