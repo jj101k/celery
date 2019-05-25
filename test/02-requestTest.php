@@ -89,7 +89,7 @@ class RequestTest extends \PHPUnit\Framework\TestCase {
         );
     }
     /**
-     * Tests how headers come out
+     * Tests that PATH_INFO is taken as the path where supplied (only)
      */
     public function testPathInfo() {
         $r = new \Celery\ServerRequest();
@@ -211,7 +211,7 @@ class RequestTest extends \PHPUnit\Framework\TestCase {
         );
     }
     /**
-     * Tests how headers come out
+     * Tests retention of scheme info
      */
     public function testScheme() {
         $r = new \Celery\ServerRequest();
