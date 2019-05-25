@@ -1,5 +1,13 @@
 # Changes
 
+## 1.0.7
+
+- Parsed query string support
+- http/https scheme detection
+- Bug: Only PATH_INFO was used to detect the path, leaving environments which
+  don't use redirect-like behaviour unable to parse the URL. This now uses
+  REQUEST_URI where PATH_INFO is not present, but decodes it.
+
 ## 1.0.6
 
 - Bug: Query strings were appearing twice in back-end URLs
