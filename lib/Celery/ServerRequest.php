@@ -171,11 +171,11 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
         $new->serverParams = $params;
         @list($host, $port) = explode(":", $params["HTTP_HOST"]);
         $uri = (new \Celery\Uri())
+            ->withFullURL($params["REQUEST_URI"])
             ->withScheme("http")
             ->withHost($host)
             ->withPort($port)
-            ->withQuery($params["QUERY_STRING"])
-            ->withPath($params["PATH_INFO"]);
+            ->withQuery($params["QUERY_STRING"]);
         if($params["CONTENT_TYPE"]) {
             $new = $new->withHeader("Content-Type", $params["CONTENT_TYPE"]);
         }
