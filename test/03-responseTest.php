@@ -33,12 +33,7 @@ class ResponseTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testStreaming() {
-        $fake_http_response = (function() {
-            yield "HTTP/1.1 200 OK\r\nHost: localhost\r\nContent-Type: application/json\r\n";
-            yield "{\"foo\":";
-            yield "true}";
-        })();
-        $r = new \Celery\Response($fake_http_response);
+        $r = new \Celery\Response("HTTP/1.1 200 OK\r\nHost: localhost\r\nContent-Type: application/json\r\n\r\n");
         $this->assertSame(
             200,
             $r->getStatusCode(),
@@ -54,6 +49,8 @@ class ResponseTest extends \PHPUnit\Framework\TestCase {
             $r->getHeaderLine("Content-Type"),
             "Expected Content-Type: header"
         );
+        $r->getBody()->write("{\"foo\":");
+        $r->getBody()->write("true}");
         $this->assertSame(
             "{\"foo\":true}",
             $r->getBody()->getContents(),

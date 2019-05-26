@@ -20,61 +20,44 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
     private $statusCode;
 
     /**
-     * Fetches the HTTP headers from the iterator. This will rewrite relevant
-     * parts of the object.
-     */
-    protected function getFirstLine() {
-        // Remove it
-        $iterator = $this->iterator;
-        $this->iterator = null;
-
-        // Get the first item and step forward
-        $headers = $iterator->current();
-        $iterator->next();
-
-        if(preg_match(
-            "#^HTTP/(?<version>\d+[.]\d+) (?<status>\d+) (?<reason>[^\r\n]+)\r\n(?<tail>.*)#s",
-            $headers,
-            $md
-        )) {
-            $this->protocolVersion = $md["version"];
-            $this->statusCode = +$md["status"];
-            $this->reasonPhrase = $md["reason"];
-            $headers = $md["tail"];
-        } else {
-            throw new \Exception(
-                "Cannot parse non-HTTP line starting: " . explode("\r\n", $headers)[0]
-            );
-        }
-        while(preg_match(
-            "/^([^:]+): ([^\r\n]*(?:\r\n\h[^\r\n]*)*)\r\n(.*)/s",
-            $headers,
-            $md
-        )) {
-            $name = $md[1];
-            $content = $md[2];
-            $headers = $md[3];
-
-            $this->setAddedHeader($name, $content);
-        }
-        $headers = preg_replace("/^\r\n$/", "", $headers);
-        if($headers) {
-            trigger_error("Left-over garbage: {$headers}");
-        }
-        $this->body = new \Celery\IterableBody($iterator);
-    }
-
-    /**
-     * Builds the object. If you supply an iterator, the first response must be
-     * the HTTP line and all headers; the second and later responses can be
-     * parts of the body.
+     * Builds the object.
      *
-     * @param iterable<string>|null $iterator
+     * @param string|null $header_block eg. "HTTP/1.1 200 OK\r\nContent-Type:
+     *  text/plain\r\n\r\n"
      */
-    public function __construct(?iterable $iterator = null) {
-        parent::__construct($iterator ? [$this, "getFirstLine"] : null);
-        $this->iterator = $iterator;
-        if(!$iterator) {
+    public function __construct(?string $header_block = null) {
+        parent::__construct();
+        if($header_block) {
+            if(preg_match(
+                "#^HTTP/(?<version>\d+[.]\d+) (?<status>\d+) (?<reason>[^\r\n]+)\r\n(?<tail>.*)#s",
+                $header_block,
+                $md
+            )) {
+                $this->protocolVersion = $md["version"];
+                $this->statusCode = +$md["status"];
+                $this->reasonPhrase = $md["reason"];
+                $header_block = $md["tail"];
+            } else {
+                throw new \Exception(
+                    "Cannot parse non-HTTP line starting: " . explode("\r\n", $header_block)[0]
+                );
+            }
+            while(preg_match(
+                "/^([^:]+): ([^\r\n]*(?:\r\n\h[^\r\n]*)*)\r\n(.*)/s",
+                $header_block,
+                $md
+            )) {
+                $name = $md[1];
+                $content = $md[2];
+                $header_block = $md[3];
+
+                $this->setAddedHeader($name, $content);
+            }
+            $header_block = preg_replace("/^\r\n$/", "", $header_block);
+            if($header_block) {
+                trigger_error("Left-over garbage: {$header_block}");
+            }
+        } else {
             $this->setAddedHeader("Content-Type", "text/html");
         }
     }
@@ -83,9 +66,6 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
      * @inheritdoc
      */
     public function getReasonPhrase() {
-        if($this->beforeFirstUse) {
-            $this->firstUse();
-        }
         return $this->reasonPhrase;
     }
 
@@ -93,9 +73,6 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
      * @inheritdoc
      */
     public function getStatusCode() {
-        if($this->beforeFirstUse) {
-            $this->firstUse();
-        }
         return $this->statusCode;
     }
 
@@ -112,9 +89,6 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
         int $http_code = 200,
         int $encode_options = 0
     ) {
-        if($this->beforeFirstUse) {
-            $this->firstUse();
-        }
         $encoded_content = json_encode($content, $encode_options);
 
         $body = new \Celery\Body();
@@ -126,7 +100,7 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
      * @inheritdoc
      */
     public function withStatus($code, $reasonPhrase = '') {
-        $new = $this->clone();
+        $new = clone($this);
         $new->statusCode = $code;
         $new->reasonPhrase = $reasonPhrase;
         return $new;
