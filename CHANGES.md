@@ -1,5 +1,10 @@
 # Changes
 
+## 1.1.0
+
+- Incompatible change: responses now accept an optional header block not an
+  iterator
+
 ## 1.0.7
 
 - Parsed query string support
