@@ -10,6 +10,11 @@ class Body implements \Psr\Http\Message\StreamInterface {
     private $fh;
 
     /**
+     * @property int|null
+     */
+    private $size = null;
+
+    /**
      * Builds the object.
      */
     public function __construct() {
@@ -44,7 +49,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function getSize() {
-        return fstat($this->fh)["size"];
+        return $this->size;
     }
 
     /**
@@ -128,5 +133,14 @@ class Body implements \Psr\Http\Message\StreamInterface {
         } else {
             return $data;
         }
+    }
+
+    /**
+     * @param int $size
+     * @return self
+     */
+    public function setSize(int $size) {
+        $this->size = $size;
+        return $this;
     }
 }
