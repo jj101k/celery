@@ -5,71 +5,81 @@ namespace Celery;
  */
 class Body implements \Psr\Http\Message\StreamInterface {
     /**
-     * @property string
+     * @property resource|null
      */
-    private $content = "";
+    private $fh;
+
+    /**
+     * Builds the object.
+     */
+    public function __construct() {
+        $this->fh = fopen("php://memory", "w+");
+    }
 
     /**
      * @inheritdoc
      */
     public function __toString() {
-        return $this->content;
+        rewind($this->fh);
+        return fread($this->fh, fstat($this->fh)["size"]);
     }
 
     /**
      * @inheritdoc
      */
     public function close() {
-        //
+        fclose($this->fh);
     }
 
     /**
      * @inheritdoc
      */
     public function detach() {
-        return null;
+        $fh = $this->fh;
+        $this->fh = null;
+        return $fh;
     }
 
     /**
      * @inheritdoc
      */
     public function getSize() {
-        return strlen($this->content);
+        return fstat($this->fh)["size"];
     }
 
     /**
      * @inheritdoc
      */
     public function tell() {
-        return null;
+        return ftell($this->fh);
     }
 
     /**
      * @inheritdoc
      */
     public function eof() {
-        return false;
+        return feof($this->fh);
     }
 
     /**
      * @inheritdoc
      */
     public function isSeekable() {
-        return false;
+        return true;
     }
 
     /**
      * @inheritdoc
      */
     public function seek($offset, $whence = SEEK_SET) {
-        throw new \RuntimeException("Not seekable");
+        fseek($this->fh, $offset, $whence);
     }
 
     /**
      * @inheritdoc
      */
     public function rewind() {
-        throw new \RuntimeException("Not seekable");
+        rewind($this->fh);
     }
 
     /**
@@ -83,8 +93,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function write($string) {
-        $this->content .= $string;
-        return strlen($string);
+        return fwrite($this->fh, $string);
     }
 
     /**
@@ -98,20 +107,26 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function read($length) {
-        return substr($this->content, 0, $length);
+        return fread($this->fh, $length);
     }
 
     /**
      * @inheritdoc
      */
     public function getContents() {
-        return $this->content;
+        rewind($this->fh);
+        return fread($this->fh, fstat($this->fh)["size"]);
     }
 
     /**
      * @inheritdoc
      */
     public function getMetadata($key = null) {
-        return null;
+        $data = stream_get_meta_data($this->fh);
+        if($key !== null) {
+            return $data[$key];
+        } else {
+            return $data;
+        }
     }
 }
