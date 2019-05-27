@@ -1,5 +1,10 @@
 # Changes
 
+## 1.1.1
+
+- Support an explicitly set size on message bodies
+- Make body objects rewritable
+
 ## 1.1.0
 
 - Incompatible change: responses now accept an optional header block not an
