@@ -1,5 +1,10 @@
 # Changes
 
+## 1.1.2
+
+- Seperately track position in the body to support multiple places using the
+  same filehandle
+
 ## 1.1.1
 
 - Support an explicitly set size on message bodies
