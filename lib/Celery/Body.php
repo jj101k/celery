@@ -10,6 +10,11 @@ class Body implements \Psr\Http\Message\StreamInterface {
     private $fh;
 
     /**
+     * @property int
+     */
+    private $pos = 0;
+
+    /**
      * @property int|null
      */
     private $size = null;
@@ -56,13 +61,16 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function tell() {
-        return ftell($this->fh);
+        return $this->pos;
     }
 
     /**
      * @inheritdoc
      */
     public function eof() {
+        if($this->pos != ftell($this->fh)) {
+            fseek($this->fh, $this->pos, SEEK_SET);
+        }
         return feof($this->fh);
     }
 
@@ -77,7 +85,11 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function seek($offset, $whence = SEEK_SET) {
+        if($this->pos != ftell($this->fh)) {
+            fseek($this->fh, $this->pos, SEEK_SET);
+        }
         fseek($this->fh, $offset, $whence);
+        $this->pos = ftell($this->fh);
     }
 
     /**
@@ -85,6 +97,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
      */
     public function rewind() {
         rewind($this->fh);
+        $this->pos = 0;
     }
 
     /**
@@ -98,7 +111,12 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function write($string) {
-        return fwrite($this->fh, $string);
+        if($this->pos != ftell($this->fh)) {
+            fseek($this->fh, $this->pos, SEEK_SET);
+        }
+        $result = fwrite($this->fh, $string);
+        $this->pos = ftell($this->fh);
+        return $result;
     }
 
     /**
@@ -112,7 +130,12 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function read($length) {
-        return fread($this->fh, $length);
+        if($this->pos != ftell($this->fh)) {
+            fseek($this->fh, $this->pos, SEEK_SET);
+        }
+        $result = fread($this->fh, $length);
+        $this->pos = ftell($this->fh);
+        return $result;
     }
 
     /**
