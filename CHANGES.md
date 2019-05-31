@@ -1,5 +1,9 @@
 # Changes
 
+## 1.1.3
+
+- BUG: Empty (eg. HEAD) responses were crashing on fread()
+
 ## 1.1.2
 
 - Seperately track position in the body to support multiple places using the
