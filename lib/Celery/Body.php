@@ -30,8 +30,13 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function __toString() {
-        rewind($this->fh);
-        return fread($this->fh, fstat($this->fh)["size"]);
+        $actual_size = fstat($this->fh)["size"];
+        if($actual_size) {
+            rewind($this->fh);
+            return fread($this->fh, $actual_size);
+        } else {
+            return "";
+        }
     }
 
     /**
@@ -142,8 +147,13 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function getContents() {
-        rewind($this->fh);
-        return fread($this->fh, fstat($this->fh)["size"]);
+        $actual_size = fstat($this->fh)["size"];
+        if($actual_size) {
+            rewind($this->fh);
+            return fread($this->fh, $actual_size);
+        } else {
+            return "";
+        }
     }
 
     /**

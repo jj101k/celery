@@ -32,6 +32,35 @@ class ResponseTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
+    public function testHead() {
+        $r = new \Celery\Response("HTTP/1.1 200 OK\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 500\r\n\r\n");
+        $this->assertSame(
+            200,
+            $r->getStatusCode(),
+            "Expected response code"
+        );
+        $this->assertSame(
+            "OK",
+            $r->getReasonPhrase(),
+            "Expected response text"
+        );
+        $this->assertSame(
+            500,
+            +$r->getHeaderLine("Content-Length"),
+            "Expected Content-Length: header"
+        );
+        $this->assertSame(
+            "",
+            $r->getBody()->getContents(),
+            "Expected content (getContents)"
+        );
+        $this->assertSame(
+            "",
+            "" . $r->getBody(),
+            "Expected content (__toString)"
+        );
+    }
+
     public function testStreaming() {
         $r = new \Celery\Response("HTTP/1.1 200 OK\r\nHost: localhost\r\nContent-Type: application/json\r\n\r\n");
         $this->assertSame(
