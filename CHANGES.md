@@ -1,5 +1,9 @@
 # Changes
 
+## 1.1.4
+
+- Re-add support for "streaming read" bodies
+
 ## 1.1.3
 
 - BUG: Empty (eg. HEAD) responses were crashing on fread()
