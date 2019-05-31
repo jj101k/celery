@@ -10,6 +10,11 @@ class Body implements \Psr\Http\Message\StreamInterface {
     private $fh;
 
     /**
+     * @property iterable|null
+     */
+    private $iterator;
+
+    /**
      * @property int
      */
     private $pos = 0;
@@ -30,6 +35,16 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function __toString() {
+        try {
+            if($this->iterator) {
+                while($this->iterator->valid()) {
+                    $this->iterator->next();
+                }
+                $this->iterator = null;
+            }
+        } catch(\Throwable $e) {
+            trigger_error($e);
+        }
         $actual_size = fstat($this->fh)["size"];
         if($actual_size) {
             rewind($this->fh);
@@ -90,6 +105,26 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function seek($offset, $whence = SEEK_SET) {
+        $actual_size = fstat($this->fh)["size"];
+        switch($whence) {
+            case SEEK_SET:
+                $seek_to = $offset;
+                break;
+            case SEEK_CUR:
+                $seek_to = $this->pos + $offset;
+                break;
+            case SEEK_END:
+                $seek_to = $actual_size + $offset;
+                break;
+        }
+        if($this->iterator and $seek_to > $actual_size) {
+            while($this->iterator->valid()) {
+                $this->iterator->next();
+                if($seek_to <= fstat($this->fh)["size"]) {
+                    break;
+                }
+            }
+        }
         if($this->pos != ftell($this->fh)) {
             fseek($this->fh, $this->pos, SEEK_SET);
         }
@@ -135,6 +170,15 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function read($length) {
+        $actual_size = fstat($this->fh)["size"];
+        if($this->iterator and $this->pos + 1 >= $actual_size) {
+            while($this->iterator->valid()) {
+                $this->iterator->next();
+                if($this->pos + 1 < fstat($this->fh)["size"]) {
+                    break;
+                }
+            }
+        }
         if($this->pos != ftell($this->fh)) {
             fseek($this->fh, $this->pos, SEEK_SET);
         }
@@ -147,6 +191,12 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function getContents() {
+        if($this->iterator) {
+            while($this->iterator->valid()) {
+                $this->iterator->next();
+            }
+            $this->iterator = null;
+        }
         $actual_size = fstat($this->fh)["size"];
         if($actual_size) {
             rewind($this->fh);
@@ -166,6 +216,18 @@ class Body implements \Psr\Http\Message\StreamInterface {
         } else {
             return $data;
         }
+    }
+
+    /**
+     * Stores an iterator which will update this object with more content when
+     * available.
+     *
+     * @param iterable|null $iterator
+     * @return self
+     */
+    public function setIterator(?iterable $iterator) {
+        $this->iterator = $iterator;
+        return $this;
     }
 
     /**
