@@ -222,6 +222,9 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * Stores an iterator which will update this object with more content when
      * available.
      *
+     * The yielded values are not used here - the iterator must update the
+     * stream itself, and any yielded value will be ignored.
+     *
      * @param iterable|null $iterator
      * @return self
      */
