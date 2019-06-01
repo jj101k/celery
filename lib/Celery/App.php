@@ -456,10 +456,14 @@ class App {
             $response->getReasonPhrase() ?:
             @self::REASON_PHRASES[$response->getStatusCode()] ??
             "-";
+        ob_implicit_flush(1);
         $this->sendHeaders(
             "HTTP/1.1 {$response->getStatusCode()} {$reason_phrase}",
             $headers
         );
-        echo $response->getBody();
+        $body = $response->getBody();
+        while(!$body->eof()) {
+            echo $body->read(4096);
+        }
     }
 }
