@@ -1,5 +1,11 @@
 # Changes
 
+## 1.2.0
+
+- Minor fix to streaming bodies: always emitted the first two chunks on the
+  first call
+- Implemented streaming at the top level, because that wasn't a thing yet.
+
 ## 1.1.4
 
 - Re-add support for "streaming read" bodies
