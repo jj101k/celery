@@ -462,6 +462,9 @@ class App {
             $headers
         );
         $body = $response->getBody();
+        if($body->tell()) {
+            $body->rewind();
+        }
         while(!$body->eof()) {
             echo $body->read(4096);
         }
