@@ -119,10 +119,10 @@ class Body implements \Psr\Http\Message\StreamInterface {
         }
         if($this->iterator and $seek_to > $actual_size) {
             while($this->iterator->valid()) {
-                $this->iterator->next();
                 if($seek_to <= fstat($this->fh)["size"]) {
                     break;
                 }
+                $this->iterator->next();
             }
         }
         if($this->pos != ftell($this->fh)) {
@@ -173,10 +173,10 @@ class Body implements \Psr\Http\Message\StreamInterface {
         $actual_size = fstat($this->fh)["size"];
         if($this->iterator and $this->pos + 1 >= $actual_size) {
             while($this->iterator->valid()) {
-                $this->iterator->next();
                 if($this->pos + 1 < fstat($this->fh)["size"]) {
                     break;
                 }
+                $this->iterator->next();
             }
         }
         if($this->pos != ftell($this->fh)) {
