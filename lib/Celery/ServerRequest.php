@@ -94,6 +94,8 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
             } elseif(preg_match("#^application/x-www-form-urlencoded#", $content_type)) {
                 $content = "" . $this->getBody();
                 parse_str($content);
+            } else {
+                trigger_error("Content type {$content_type} cannot be parsed");
             }
             $this->hasParsed = true;
         }
