@@ -42,7 +42,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
             $this->size = fstat($this->fh)["size"];
             $this->forRead = true;
         } else {
-            $this->fh = fopen("php://memory", "w+");
+            $this->fh = fopen("php://temp", "w+");
             $this->size = null;
             $this->forRead = false;
         }
