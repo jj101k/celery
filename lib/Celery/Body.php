@@ -26,9 +26,19 @@ class Body implements \Psr\Http\Message\StreamInterface {
 
     /**
      * Builds the object.
+     *
+     * @param string|null $filename If provided, this will be a readable stream
+     *  attached to that file. Otherwise it will be a read/write stream in
+     *  memory.
      */
-    public function __construct() {
-        $this->fh = fopen("php://memory", "w+");
+    public function __construct(?string $filename = null) {
+        if($filename !== null) {
+            $this->fh = fopen($filename, "r");
+            $this->size = fstat($this->fh)["size"];
+        } else {
+            $this->fh = fopen("php://memory", "w+");
+            $this->size = null;
+        }
     }
 
     /**
@@ -105,24 +115,26 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function seek($offset, $whence = SEEK_SET) {
-        $actual_size = fstat($this->fh)["size"];
-        switch($whence) {
-            case SEEK_SET:
-                $seek_to = $offset;
-                break;
-            case SEEK_CUR:
-                $seek_to = $this->pos + $offset;
-                break;
-            case SEEK_END:
-                $seek_to = $actual_size + $offset;
-                break;
-        }
-        if($this->iterator and $seek_to > $actual_size) {
-            while($this->iterator->valid()) {
-                if($seek_to <= fstat($this->fh)["size"]) {
+        if($this->iterator) {
+            $actual_size = fstat($this->fh)["size"];
+            switch($whence) {
+                case SEEK_SET:
+                    $seek_to = $offset;
                     break;
+                case SEEK_CUR:
+                    $seek_to = $this->pos + $offset;
+                    break;
+                case SEEK_END:
+                    $seek_to = $actual_size + $offset;
+                    break;
+            }
+            if($seek_to > $actual_size) {
+                while($this->iterator->valid()) {
+                    if($seek_to <= fstat($this->fh)["size"]) {
+                        break;
+                    }
+                    $this->iterator->next();
                 }
-                $this->iterator->next();
             }
         }
         if($this->pos != ftell($this->fh)) {
@@ -137,26 +149,30 @@ class Body implements \Psr\Http\Message\StreamInterface {
      */
     public function rewind() {
         rewind($this->fh);
-        $this->pos = 0;
+        $this->pos = ftell($this->fh);
     }
 
     /**
      * @inheritdoc
      */
     public function isWritable() {
-        return true;
+        return ($this->size === null);
     }
 
     /**
      * @inheritdoc
      */
     public function write($string) {
-        if($this->pos != ftell($this->fh)) {
-            fseek($this->fh, $this->pos, SEEK_SET);
+        if($this->size === null) {
+            if($this->pos != ftell($this->fh)) {
+                fseek($this->fh, $this->pos, SEEK_SET);
+            }
+            $result = fwrite($this->fh, $string);
+            $this->pos = ftell($this->fh);
+            return $result;
+        } else {
+            throw new \RuntimeException("Not writable");
         }
-        $result = fwrite($this->fh, $string);
-        $this->pos = ftell($this->fh);
-        return $result;
     }
 
     /**
@@ -170,13 +186,15 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function read($length) {
-        $actual_size = fstat($this->fh)["size"];
-        if($this->iterator and $this->pos + 1 >= $actual_size) {
-            while($this->iterator->valid()) {
-                if($this->pos + 1 < fstat($this->fh)["size"]) {
-                    break;
+        if($this->iterator) {
+            $actual_size = fstat($this->fh)["size"];
+            if($this->pos + 1 >= $actual_size) {
+                while($this->iterator->valid()) {
+                    if($this->pos + 1 < fstat($this->fh)["size"]) {
+                        break;
+                    }
+                    $this->iterator->next();
                 }
-                $this->iterator->next();
             }
         }
         if($this->pos != ftell($this->fh)) {

@@ -53,7 +53,7 @@ class UploadedFile implements \Psr\Http\Message\UploadedFileInterface {
     public function getStream() {
         if($this->viaFilename) {
             if(!$this->contentStream) {
-                $this->contentStream = new \Celery\StreamFile($this->viaFilename);
+                $this->contentStream = new \Celery\Body($this->viaFilename);
             }
             return $this->contentStream;
         } else {
