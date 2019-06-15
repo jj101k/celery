@@ -62,7 +62,9 @@ foreach($paths as $path) {
     });
     $app->post($path, function($request, $response) {
         //error_log("" . $request->getBody());
-        return $response->withJSON($request->getParsedBody());
+        return $response->withJSON([
+            "body" => $request->getParsedBody()
+        ]);
     });
 }
 $app->run(false);
