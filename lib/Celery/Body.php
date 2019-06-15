@@ -62,12 +62,20 @@ class Body implements \Psr\Http\Message\StreamInterface {
         } catch(\Throwable $e) {
             trigger_error($e);
         }
-        $actual_size = fstat($this->fh)["size"];
-        if($actual_size) {
+        if($this->forRead) {
             if(ftell($this->fh)) {
                 rewind($this->fh);
             }
-            return fread($this->fh, $actual_size);
+            $actual_size = fstat($this->fh)["size"];
+            if($actual_size !== null) {
+                return fread($this->fh, $actual_size);
+            } else {
+                $out = "";
+                while(!feof($this->fh)) {
+                    $out .= fread($this->fh, 4096);
+                }
+                return $out;
+            }
         } else {
             return "";
         }
@@ -224,12 +232,20 @@ class Body implements \Psr\Http\Message\StreamInterface {
             }
             $this->iterator = null;
         }
-        $actual_size = fstat($this->fh)["size"];
-        if($actual_size) {
+        if($this->forRead) {
             if(ftell($this->fh)) {
                 rewind($this->fh);
             }
-            return fread($this->fh, $actual_size);
+            $actual_size = fstat($this->fh)["size"];
+            if($actual_size !== null) {
+                return fread($this->fh, $actual_size);
+            } else {
+                $out = "";
+                while(!feof($this->fh)) {
+                    $out .= fread($this->fh, 4096);
+                }
+                return $out;
+            }
         } else {
             return "";
         }
