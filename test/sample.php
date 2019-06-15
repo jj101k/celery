@@ -4,7 +4,6 @@
 require_once "vendor/autoload.php";
 if(!isset($app_class)) {
     $app_class = @$argv[1] ?: "Celery\App";
-    $use_post = !!@$argv[2];
 }
 use \Psr\Http\Message\ServerRequestInterface;
 use \Psr\Http\Message\ResponseInterface;
@@ -58,38 +57,24 @@ $app = new $app_class([
 foreach($paths as $path) {
     // Simple example handlers
     $app->get($path, function($request, $response) {
-        return $response->withJSON([]);
+        $response->getBody()->write(
+            "
+            <!DOCTYPE html>
+            <html>
+                <body>
+                    <form method='post'>
+                        <input type='text' name='foo'/>
+                        <input type='submit'/>
+                    </form>
+                </body>
+            </html>
+            "
+        );
+        return $response;
     });
     $app->post($path, function($request, $response) {
         //error_log("" . $request->getBody());
         return $response->withJSON($request->getParsedBody());
     });
 }
-
-if($use_post) {
-    // This will give you broad compat with Slim's loader if you want to try it
-    $_SERVER = [
-        "REQUEST_METHOD" => "POST",
-        "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
-        "QUERY_STRING" => "",
-        "CONTENT_TYPE" => "application/json",
-    ];
-    $app->run(false, [
-        "REQUEST_METHOD" => "POST",
-        "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
-        "QUERY_STRING" => "",
-        "CONTENT_TYPE" => "application/json",
-    ]);
-} else {
-    // This will give you broad compat with Slim's loader if you want to try it
-    $_SERVER = [
-        "REQUEST_METHOD" => "GET",
-        "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
-        "QUERY_STRING" => "",
-    ];
-    $app->run(false, [
-        "REQUEST_METHOD" => "GET",
-        "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
-        "QUERY_STRING" => "",
-    ]);
-}
+$app->run(false);

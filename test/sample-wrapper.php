@@ -6,6 +6,20 @@ if(count($argv) > 1) {
 }
 $app_class = @$argv[1] ?: "Celery\App";
 $use_post = !!@$argv[2];
+if($use_post) {
+    $_SERVER = [
+        "REQUEST_METHOD" => "POST",
+        "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
+        "QUERY_STRING" => "",
+        "CONTENT_TYPE" => "application/json",
+    ];
+} else {
+    $_SERVER = [
+        "REQUEST_METHOD" => "GET",
+        "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
+        "QUERY_STRING" => "",
+    ];
+}
 // You can run this if you want to see how long sample.php takes once the PHP
 // interpreter is up.
 $s = microtime(true);
