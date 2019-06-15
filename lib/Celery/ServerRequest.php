@@ -200,7 +200,7 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
             ->withScheme(@$params["HTTPS"] ? "https" : "http")
             ->withHost($host)
             ->withPort($port)
-            ->withQuery($params["QUERY_STRING"]);
+            ->withQuery(@$params["QUERY_STRING"]);
         if(@$params["PATH_INFO"]) {
             $uri = $uri->withPath($params["PATH_INFO"]);
         }
