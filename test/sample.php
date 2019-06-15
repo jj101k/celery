@@ -57,19 +57,7 @@ $app = new $app_class([
 foreach($paths as $path) {
     // Simple example handlers
     $app->get($path, function($request, $response) {
-        $response->getBody()->write(
-            "
-            <!DOCTYPE html>
-            <html>
-                <body>
-                    <form method='post'>
-                        <input type='text' name='foo'/>
-                        <input type='submit'/>
-                    </form>
-                </body>
-            </html>
-            "
-        );
+        $response->getBody()->write(file_get_contents("test/example.html"));
         return $response;
     });
     $app->post($path, function($request, $response) {
