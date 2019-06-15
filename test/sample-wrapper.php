@@ -5,6 +5,7 @@ if(count($argv) > 1) {
     error_log("Using \Celery\App (default)\n");
 }
 $app_class = @$argv[1] ?: "Celery\App";
+$use_post = !!@$argv[2];
 // You can run this if you want to see how long sample.php takes once the PHP
 // interpreter is up.
 $s = microtime(true);
