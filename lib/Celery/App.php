@@ -433,6 +433,9 @@ class App {
             ->withServerParams($server_params ?? $_SERVER)
             ->withUploadedFiles($_FILES)
             ->withBody($body);
+        if(isset($_POST)) {
+            $request = $request->withParsedBody($_POST);
+        }
         $response = $this->handleRequest($request, $silent);
         if(!$silent) {
             $this->sendResponse($response);
