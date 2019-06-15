@@ -10,6 +10,11 @@ class Body implements \Psr\Http\Message\StreamInterface {
     private $fh;
 
     /**
+     * @property bool
+     */
+    private $forRead;
+
+    /**
      * @property iterable|null
      */
     private $iterator;
@@ -35,9 +40,11 @@ class Body implements \Psr\Http\Message\StreamInterface {
         if($filename !== null) {
             $this->fh = fopen($filename, "r");
             $this->size = fstat($this->fh)["size"];
+            $this->forRead = true;
         } else {
             $this->fh = fopen("php://memory", "w+");
             $this->size = null;
+            $this->forRead = false;
         }
     }
 
@@ -156,22 +163,22 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function isWritable() {
-        return ($this->size === null);
+        return !$this->forRead;
     }
 
     /**
      * @inheritdoc
      */
     public function write($string) {
-        if($this->size === null) {
+        if($this->forRead) {
+            throw new \RuntimeException("Not writable");
+        } else {
             if($this->pos != ftell($this->fh)) {
                 fseek($this->fh, $this->pos, SEEK_SET);
             }
             $result = fwrite($this->fh, $string);
             $this->pos = ftell($this->fh);
             return $result;
-        } else {
-            throw new \RuntimeException("Not writable");
         }
     }
 
@@ -179,7 +186,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function isReadable() {
-        return true;
+        return $this->forRead;
     }
 
     /**
