@@ -17,7 +17,7 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
     /**
      * @property int
      */
-    private $statusCode;
+    private $statusCode = 200;
 
     /**
      * Builds the object.

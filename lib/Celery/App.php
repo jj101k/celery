@@ -456,13 +456,13 @@ class App {
                 $headers[] = "{$name}: {$value}";
             }
         }
+        $status_code = $response->getStatusCode() ?? 200;
         $reason_phrase =
             $response->getReasonPhrase() ?:
-            @self::REASON_PHRASES[$response->getStatusCode()] ??
-            "-";
+            @self::REASON_PHRASES[$status_code] ?? "-";
         ob_implicit_flush(1);
         $this->sendHeaders(
-            "HTTP/1.1 {$response->getStatusCode()} {$reason_phrase}",
+            "HTTP/1.1 {$status_code} {$reason_phrase}",
             $headers
         );
         $body = $response->getBody();
