@@ -63,7 +63,10 @@ foreach($paths as $path) {
     $app->post($path, function($request, $response) {
         //error_log("" . $request->getBody());
         return $response->withJSON([
-            "body" => $request->getParsedBody()
+            "body" => $request->getParsedBody(),
+            "file" => array_key_exists("bar", $request->getUploadedFiles()) ?
+                "" . $request->getUploadedFiles()["bar"]->getStream() :
+                null,
         ]);
     });
 }
