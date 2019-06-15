@@ -93,7 +93,10 @@ class Response extends \Celery\Message implements \Psr\Http\Message\ResponseInte
 
         $body = new \Celery\Body();
         $body->write($encoded_content);
-        return $this->withBody($body)->withStatus($http_code);
+        return $this
+            ->withHeader("Content-Type", "application/json")
+            ->withBody($body)
+            ->withStatus($http_code);
     }
 
     /**
