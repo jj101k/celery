@@ -9,5 +9,27 @@
             <input type='text' name='foo'/>
             <input type='submit'/>
         </form>
+        <div>
+            <script>
+                async function send() {
+                    const r = await fetch(
+                        "/",
+                        {
+                            method: "post",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({foo: document.querySelector("input#f").value})
+                        }
+                    )
+                    document.querySelector("pre#out").textContent = JSON.stringify(
+                        await r.json()
+                    )
+                }
+            </script>
+            <input type='text' id='f'/>
+            <button type='button' onclick='send()'>Send</button>
+            <pre id="out"></pre>
+        </div>
     </body>
 </html>
