@@ -10,6 +10,7 @@ class TimingTest extends \PHPUnit\Framework\TestCase {
     public function test() {
         ob_start(function($buffer) {return "";});
 
+        $app_class = "Celery\App";
         // Now to do the job
         $s = microtime(true);
         require_once "test/sample.php";
