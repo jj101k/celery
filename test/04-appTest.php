@@ -184,6 +184,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
                             ResponseInterface $response,
                             \Exception $e
                         ) {
+                            //error_log($e);
                             return $response->withJson([
                                 "type" => "exception",
                             ], 500);
@@ -217,6 +218,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
                             ResponseInterface $response,
                             \Error $e
                         ) {
+                            //error_log($e);
                             return $response->withJson([
                                 "type" => "error",
                             ], 500);
