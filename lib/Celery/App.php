@@ -428,7 +428,9 @@ class App {
      * @param array|null $server_params Mostly for testing
      */
     public function run(bool $silent = false, ?array $server_params = null) {
-        $body = new \Celery\Body("php://input");
+        $body = new \Celery\Body(
+            php_sapi_name() == "cli" ? "php://stdin" : "php://input"
+        );
         $request = (new \Celery\ServerRequest())
             ->withServerParams($server_params ?? $_SERVER)
             ->withUploadedFiles($_FILES)
