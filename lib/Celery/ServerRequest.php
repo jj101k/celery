@@ -33,6 +33,11 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
     private $cookieParams;
 
     /**
+     * @property bool
+     */
+    private $hasParsed = false;
+
+    /**
      * @property null|array|object
      */
     private $parsedBody;
@@ -81,6 +86,15 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
      * @inheritdoc
      */
     public function getParsedBody() {
+        if(!$this->hasParsed) {
+            $content_type = $this->getHeaderLine("Content-Type");
+            if(preg_match("#^application/json#", $content_type)) {
+                $this->parsedBody = json_decode("" . $this->getBody());
+            } elseif(preg_match("#^application/x-www-form-urlencoded#", $content_type)) {
+                parse_str("" . $this->getBody(), $this->parsedBody);
+            }
+            $this->hasParsed = true;
+        }
         return $this->parsedBody;
     }
 
@@ -137,6 +151,7 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
      */
     public function withParsedBody($data) {
         $new = clone($this);
+        $new->hasParsed = true;
         $new->parsedBody = $data;
         return $new;
     }
