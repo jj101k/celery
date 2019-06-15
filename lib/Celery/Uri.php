@@ -203,12 +203,12 @@ class Uri implements \Psr\Http\Message\UriInterface {
     public function withFullURL(string $url) {
         $info = parse_url($url);
         return $this
-            ->withScheme($info["scheme"])
-            ->withHost($info["host"])
-            ->withPort($info["port"])
-            ->withUserInfo($info["user"], $info["pass"])
+            ->withScheme(@$info["scheme"])
+            ->withHost(@$info["host"])
+            ->withPort(@$info["port"])
+            ->withUserInfo(@$info["user"], @$info["pass"])
             ->withPath($info["path"])
-            ->withQuery($info["query"])
-            ->withFragment($info["fragment"]);
+            ->withQuery(@$info["query"])
+            ->withFragment(@$info["fragment"]);
     }
 }

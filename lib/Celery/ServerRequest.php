@@ -12,7 +12,7 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
     private static function uploadedFilesTree(array $uploadedFiles): array {
         return array_map(
             function($f) {
-                if($f["tmp_name"]) {
+                if(@$f["tmp_name"]) {
                     return new \Celery\UploadedFile($f);
                 } else {
                     return self::uploadedFilesTree($f);
@@ -189,7 +189,7 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
         if(@$params["PATH_INFO"]) {
             $uri = $uri->withPath($params["PATH_INFO"]);
         }
-        if($params["CONTENT_TYPE"]) {
+        if(@$params["CONTENT_TYPE"]) {
             $new = $new->withHeader("Content-Type", $params["CONTENT_TYPE"]);
         }
         foreach($params as $k => $v) {

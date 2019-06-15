@@ -261,15 +261,15 @@ class App {
             $response->getBody()->write("Internal Server Error");
             return $response->withStatus(500)->withHeader("Content-Type", "text/plain");
         };
-        $exception_handler = $this->config["errorHandler"] ?
+        $exception_handler = @$this->config["errorHandler"] ?
             $this->config["errorHandler"]() :
             $default_error_handler;
 
-        $error_handler = $this->config["phpErrorHandler"] ?
+        $error_handler = @$this->config["phpErrorHandler"] ?
             $this->config["phpErrorHandler"]() :
             $default_error_handler;
 
-        $method_not_allowed_handler = $this->config["notAllowedHandler"] ?
+        $method_not_allowed_handler = @$this->config["notAllowedHandler"] ?
             $this->config["notAllowedHandler"]() :
             function($request, $response, $methods) {
                 $response->getBody()->write(
@@ -278,7 +278,7 @@ class App {
                 );
                 return $response->withStatus(405)->withHeader("Content-Type", "text/plain");
             };
-        $not_found_handler = $this->config["notFoundHandler"] ?
+        $not_found_handler = @$this->config["notFoundHandler"] ?
             $this->config["notFoundHandler"]() :
             function($request, $response) {
                 $response->getBody()->write("Not found");
