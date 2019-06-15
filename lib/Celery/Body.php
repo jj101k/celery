@@ -117,7 +117,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function isSeekable() {
-        return true;
+        return stream_get_meta_data($this->fh)["seekable"];
     }
 
     /**
