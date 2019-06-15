@@ -89,9 +89,11 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
         if(!$this->hasParsed) {
             $content_type = $this->getHeaderLine("Content-Type");
             if(preg_match("#^application/json#", $content_type)) {
-                $this->parsedBody = json_decode("" . $this->getBody());
+                $content = "" . $this->getBody();
+                $this->parsedBody = json_decode($content);
             } elseif(preg_match("#^application/x-www-form-urlencoded#", $content_type)) {
-                parse_str("" . $this->getBody(), $this->parsedBody);
+                $content = "" . $this->getBody();
+                parse_str($content);
             }
             $this->hasParsed = true;
         }
