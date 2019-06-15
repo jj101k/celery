@@ -47,6 +47,7 @@ class StreamingTest extends \PHPUnit\Framework\TestCase {
         $app->run(false, [
             "REQUEST_METHOD" => "get",
             "REQUEST_URI" => "/",
+            "QUERY_STRING" => "",
         ]);
         ob_end_flush();
         $this->assertSame(

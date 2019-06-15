@@ -23,6 +23,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
         $app->run(false, [
             "REQUEST_METHOD" => $method,
             "REQUEST_URI" => $path,
+            "QUERY_STRING" => "",
         ]);
         ob_end_flush();
         return $written;
@@ -245,6 +246,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             throw new \Exception("foo");
         });
         $app->get("/error", function() {
+            $foo = null;
             return $foo->bar();
         });
 

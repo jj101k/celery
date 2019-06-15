@@ -62,8 +62,10 @@ foreach($paths as $path) {
 $_SERVER = [
     "REQUEST_METHOD" => "GET",
     "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
+    "QUERY_STRING" => "",
 ];
 $app->run(false, [
     "REQUEST_METHOD" => "GET",
     "REQUEST_URI" => "/alpha/bravo/charlie/0/echo/golf",
+    "QUERY_STRING" => "",
 ]);
