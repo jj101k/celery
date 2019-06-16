@@ -39,12 +39,20 @@ class FileUploadTest extends \PHPUnit\Framework\TestCase {
                         "size" => strlen($a_contents),
                     ],
                     "b" => [
-                        "c" => [
-                            "name" => "foo.png",
-                            "type" => "image/png",
-                            "tmp_name" => $b_filename,
-                            "error" => 0,
-                            "size" => strlen($b_contents),
+                        "name" => [
+                            "c" => "foo.png",
+                        ],
+                        "type" => [
+                            "c" => "image/png",
+                        ],
+                        "tmp_name" => [
+                            "c" => $b_filename,
+                        ],
+                        "error" => [
+                            "c" => 0,
+                        ],
+                        "size" => [
+                            "c" => strlen($b_contents),
                         ],
                     ],
                     "d" => [
