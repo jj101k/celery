@@ -7,9 +7,46 @@ class BodyTest extends \PHPUnit\Framework\TestCase {
     /**
      * Make sure that using an iterator to import more data works
      */
-    public function testStreamingWithIterator() {
+    public function testStreamingWithCloneIterator() {
         $body = new \Celery\Body();
         $b = clone($body);
+        $body->setIterator(
+            (function($b) {
+                yield;
+                $b->write("seek");
+                yield;
+                yield;
+                $b->write("read");
+                yield;
+                yield;
+                $b->write("everything else");
+            })($b)
+        );
+        $body->seek(1); // Should advance
+        $this->assertSame(
+            "eek",
+            $body->read(3),
+            "seek() -> read() (clone) works"
+        );
+        $this->assertSame(
+            "read",
+            $body->read(4),
+            "read() (clone) when empty works"
+        );
+        // getContents (A)
+        $this->assertSame(
+            "seekreadeverything else",
+            $body->getContents(),
+            "getContents() (clone) reads the rest"
+        );
+    }
+
+    /**
+     * Make sure that using an iterator to import more data works
+     */
+    public function testStreamingWithIterator() {
+        $body = new \Celery\Body();
+        $b = $body->writableCopy();
         $body->setIterator(
             (function($b) {
                 yield;
@@ -40,7 +77,7 @@ class BodyTest extends \PHPUnit\Framework\TestCase {
             "getContents() reads the rest"
         );
         $body = new \Celery\Body();
-        $b = clone($body);
+        $b = $body->writableCopy();
         $body->setIterator(
             (function($b) {
                 yield;

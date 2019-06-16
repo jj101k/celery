@@ -181,6 +181,24 @@ class Body implements \Psr\Http\Message\StreamInterface {
     }
 
     /**
+     * Returns a copy of the object with writes turned on, at the same time
+     * turning writes off on this one.
+     *
+     * @return self
+     */
+    public function writableCopy() {
+        if($this->forRead !== null) {
+            throw new \Exception(
+                "Cannot make a writable copy of a read-only/write-only object"
+            );
+        }
+        $this->forRead = true;
+        $new = clone($this);
+        $new->forRead = false;
+        return $new;
+    }
+
+    /**
      * @inheritdoc
      */
     public function write($string) {
