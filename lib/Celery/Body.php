@@ -10,7 +10,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
     private $fh;
 
     /**
-     * @property bool
+     * @property bool|null
      */
     private $forRead;
 
@@ -44,7 +44,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
         } else {
             $this->fh = fopen("php://temp", "w+");
             $this->size = null;
-            $this->forRead = false;
+            $this->forRead = null;
         }
     }
 
@@ -62,7 +62,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
         } catch(\Throwable $e) {
             trigger_error($e);
         }
-        if($this->forRead) {
+        if($this->forRead !== false) {
             if(ftell($this->fh)) {
                 rewind($this->fh);
             }
@@ -177,14 +177,14 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function isWritable() {
-        return !$this->forRead;
+        return $this->forRead !== true;
     }
 
     /**
      * @inheritdoc
      */
     public function write($string) {
-        if($this->forRead) {
+        if($this->forRead === true) {
             throw new \RuntimeException("Not writable");
         } else {
             if($this->pos != ftell($this->fh)) {
@@ -200,7 +200,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function isReadable() {
-        return $this->forRead;
+        return $this->forRead !== false;
     }
 
     /**
@@ -236,7 +236,7 @@ class Body implements \Psr\Http\Message\StreamInterface {
             }
             $this->iterator = null;
         }
-        if($this->forRead) {
+        if($this->forRead !== false) {
             if(ftell($this->fh)) {
                 rewind($this->fh);
             }
