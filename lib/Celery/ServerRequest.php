@@ -9,7 +9,7 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
      * @param array $uploadedFiles as $_FILES
      * @return array|\Celery\UploadedFile Values are either recursive arrays or \Psr\Http\Message\UploadedFileInterface
      */
-    private static function uploadedFilesTree(array $uploadedFiles) {
+    public static function uploadedFilesTree(array $uploadedFiles) {
         if(is_array($uploadedFiles["tmp_name"])) {
             $out = [];
             foreach($uploadedFiles["tmp_name"] as $k => $v) {
@@ -178,10 +178,7 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
      */
     public function withUploadedFiles(array $uploadedFiles) {
         $new = clone($this);
-        $new->uploadedFiles = array_map(
-            function($f) {return self::uploadedFilesTree($f);},
-            $uploadedFiles
-        );
+        $new->uploadedFiles = $uploadedFiles;
         return $new;
     }
 

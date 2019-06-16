@@ -27,31 +27,36 @@ class FileUploadTest extends \PHPUnit\Framework\TestCase {
             "REQUEST_URI" => "/",
             "REQUEST_METHOD" => "POST",
             "CONTENT_TYPE" => "multipart/form-data;boundary={$boundary}"
-        ])->withUploadedFiles([
-            "a" => [
-                "name" => "foo.png",
-                "type" => "image/png",
-                "tmp_name" => $a_filename,
-                "error" => 0,
-                "size" => strlen($a_contents),
-            ],
-            "b" => [
-                "c" => [
-                    "name" => "foo.png",
-                    "type" => "image/png",
-                    "tmp_name" => $b_filename,
-                    "error" => 0,
-                    "size" => strlen($b_contents),
-                ],
-            ],
-            "d" => [
-                "name" => "foo.png",
-                "type" => "image/png",
-                "tmp_name" => $d_filename,
-                "error" => 0,
-                "size" => strlen($d_contents),
-            ],
-        ]);
+        ])->withUploadedFiles(
+            array_map(
+                ["\Celery\ServerRequest", "uploadedFilesTree"],
+                [
+                    "a" => [
+                        "name" => "foo.png",
+                        "type" => "image/png",
+                        "tmp_name" => $a_filename,
+                        "error" => 0,
+                        "size" => strlen($a_contents),
+                    ],
+                    "b" => [
+                        "c" => [
+                            "name" => "foo.png",
+                            "type" => "image/png",
+                            "tmp_name" => $b_filename,
+                            "error" => 0,
+                            "size" => strlen($b_contents),
+                        ],
+                    ],
+                    "d" => [
+                        "name" => "foo.png",
+                        "type" => "image/png",
+                        "tmp_name" => $d_filename,
+                        "error" => 0,
+                        "size" => strlen($d_contents),
+                    ],
+                ]
+            )
+        );
         $this->assertSame(
             strlen($a_contents),
             $r->getUploadedFiles()["a"]->getSize(),

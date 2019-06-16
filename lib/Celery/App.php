@@ -433,7 +433,10 @@ class App {
         );
         $request = (new \Celery\ServerRequest())
             ->withServerParams($server_params ?? $_SERVER)
-            ->withUploadedFiles($_FILES)
+            ->withUploadedFiles(array_map(
+                ["\Celery\ServerRequest", "uploadedFilesTree"],
+                $_FILES
+            ))
             ->withBody($body);
         if($_POST) {
             $request = $request->withParsedBody($_POST);
