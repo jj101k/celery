@@ -1,5 +1,23 @@
 # Changes
 
+## 1.3.0
+
+- Add an explicit mechanism to split a stream into writable and readable
+  (`writableCopy()`)
+- BUG: `withUploadedFiles()` was expecting `$_FILES` format not PSR-7 format
+- BUG: file uploads with structured names, eg. `foo[bar][]` were not added
+  correctly
+- BUG: `getParsedBody()` never did anything
+- BUG: `withJSON()` never set the content type
+- BUG: Bodies did not report that `php://input` is not seekable
+- Switched to `php://temp` for ad-hoc bodies for better large-file support
+- Stream objects (bodies) are now generally readable or writable but not both
+- Request body is now directly attached to `php://input` so that it can be
+  streamed where needed.
+- `\Celery\StreamFile` is now implemented through `\Celery\Body`
+- Various warning reductions
+- Various testing improvements
+
 ## 1.2.0
 
 - Minor fix to streaming bodies: always emitted the first two chunks on the
