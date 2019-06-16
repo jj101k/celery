@@ -64,12 +64,20 @@ foreach($paths as $path) {
     });
     $app->post($path, function($request, $response) {
         //error_log("" . $request->getBody());
-        return $response->withJSON([
-            "body" => $request->getParsedBody(),
-            "file" => array_key_exists("bar", $request->getUploadedFiles()) ?
-                "" . $request->getUploadedFiles()["bore"]["bear"][0]->getStream() :
-                null,
-        ]);
+        if(
+            array_key_exists("bore", $request->getUploadedFiles()) and
+            $request->getUploadedFiles()["bore"]["bear"][0]->getError() == UPLOAD_ERR_OK
+        ) {
+            return $response->withJSON([
+                "body" => $request->getParsedBody(),
+                "file" => "" . $request->getUploadedFiles()["bore"]["bear"][0]->getStream(),
+            ]);
+        } else {
+            return $response->withJSON([
+                "body" => $request->getParsedBody(),
+                "file" => null,
+            ]);
+        }
     });
 }
 $app->run(false);
