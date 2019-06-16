@@ -7,7 +7,10 @@
         </form>
         <form method='post' enctype='multipart/form-data'>
             <input type='text' name='foo'/>
-            <input type='file' name='bar'/>
+            <input type='file' name='bar[baz]'/>
+            <input type='file' name='bar[burr][beer]'/>
+            <input type='file' name='bore[bear][]'/>
+            <input type='file' name='bore[bear][]'/>
             <input type='submit'/>
         </form>
         <div>

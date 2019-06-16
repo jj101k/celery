@@ -67,7 +67,7 @@ foreach($paths as $path) {
         return $response->withJSON([
             "body" => $request->getParsedBody(),
             "file" => array_key_exists("bar", $request->getUploadedFiles()) ?
-                "" . $request->getUploadedFiles()["bar"]->getStream() :
+                "" . $request->getUploadedFiles()["bore"]["bear"][0]->getStream() :
                 null,
         ]);
     });
