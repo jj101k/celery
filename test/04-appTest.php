@@ -99,9 +99,9 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             "GET /a: returned a success code"
         );
         $this->assertRegExp(
-            "#^Content-Type: text/html#mi",
+            "#^Content-Type: application/json#mi",
             implode("\r\n", $saved_headers),
-            "GET /a: Headers include a content type (text/html)"
+            "GET /a: Headers include a content type (application/json)"
         );
         foreach($TEST_METHODS as $method) {
             $http_method = strtoupper($method);
