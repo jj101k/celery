@@ -68,7 +68,11 @@ class Body implements \Psr\Http\Message\StreamInterface {
             }
             $actual_size = fstat($this->fh)["size"];
             if($actual_size !== null) {
-                return fread($this->fh, $actual_size);
+                if($actual_size) {
+                    return fread($this->fh, $actual_size);
+                } else {
+                    return "";
+                }
             } else {
                 $out = "";
                 while(!feof($this->fh)) {
@@ -238,7 +242,11 @@ class Body implements \Psr\Http\Message\StreamInterface {
             }
             $actual_size = fstat($this->fh)["size"];
             if($actual_size !== null) {
-                return fread($this->fh, $actual_size);
+                if($actual_size) {
+                    return fread($this->fh, $actual_size);
+                } else {
+                    return "";
+                }
             } else {
                 $out = "";
                 while(!feof($this->fh)) {
