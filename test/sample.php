@@ -15,6 +15,7 @@ $app = new $app_class([
             ResponseInterface $response,
             \Exception $e
         ) {
+            error_log($e);
             return $response->withJson([
                 "type" => "exception",
             ]);
@@ -48,6 +49,7 @@ $app = new $app_class([
             ResponseInterface $response,
             \Error $e
         ) {
+            error_log($e);
             return $response->withJson([
                 "type" => "error",
             ]);
