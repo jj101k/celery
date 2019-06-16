@@ -7,19 +7,23 @@ namespace Celery;
 class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerRequestInterface {
     /**
      * @param array $uploadedFiles as $_FILES
-     * @return array Values are either recursive arrays or \Psr\Http\Message\UploadedFileInterface
+     * @return array|\Celery\UploadedFile Values are either recursive arrays or \Psr\Http\Message\UploadedFileInterface
      */
-    private static function uploadedFilesTree(array $uploadedFiles): array {
-        return array_map(
-            function($f) {
-                if(array_key_exists("tmp_name", $f)) {
-                    return new \Celery\UploadedFile($f);
-                } else {
-                    return self::uploadedFilesTree($f);
-                }
-            },
-            $uploadedFiles
-        );
+    private static function uploadedFilesTree(array $uploadedFiles) {
+        if(is_array($uploadedFiles["tmp_name"])) {
+            $out = [];
+            foreach($uploadedFiles["tmp_name"] as $k => $v) {
+                $out[$k] = self::uploadedFilesTree(
+                    array_combine(
+                        array_keys($uploadedFiles),
+                        array_column($uploadedFiles, $k)
+                    )
+                );
+            }
+            return $out;
+        } else {
+            return new \Celery\UploadedFile($uploadedFiles);
+        }
     }
 
     /**
@@ -174,7 +178,10 @@ class ServerRequest extends \Celery\Request implements \Psr\Http\Message\ServerR
      */
     public function withUploadedFiles(array $uploadedFiles) {
         $new = clone($this);
-        $new->uploadedFiles = self::uploadedFilesTree($uploadedFiles);
+        $new->uploadedFiles = array_map(
+            function($f) {return self::uploadedFilesTree($f);},
+            $uploadedFiles
+        );
         return $new;
     }
 
