@@ -14,6 +14,7 @@ class UriTest extends \PHPUnit\Framework\TestCase {
             "/bar/boz",
             "mailto:example@example.org",
             "ftp://foo@baz.boz/mail",
+            "http://example.org",
         ];
         foreach($uris as $uri) {
             $parts = parse_url($uri) + [

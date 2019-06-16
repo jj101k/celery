@@ -207,7 +207,7 @@ class Uri implements \Psr\Http\Message\UriInterface {
             ->withHost(@$info["host"])
             ->withPort(@$info["port"])
             ->withUserInfo(@$info["user"], @$info["pass"])
-            ->withPath($info["path"])
+            ->withPath(@$info["path"])
             ->withQuery(@$info["query"])
             ->withFragment(@$info["fragment"]);
     }
