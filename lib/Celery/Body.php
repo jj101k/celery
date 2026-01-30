@@ -119,6 +119,9 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function eof() {
+        if(!$this->forRead) {
+            return !$this->iterator;
+        }
         if($this->pos != ftell($this->fh)) {
             fseek($this->fh, $this->pos, SEEK_SET);
         }
@@ -150,11 +153,16 @@ class Body implements \Psr\Http\Message\StreamInterface {
                     break;
             }
             if($seek_to > $actual_size) {
+                $seekComplete = false;
                 while($this->iterator->valid()) {
                     if($seek_to <= fstat($this->fh)["size"]) {
+                        $seekComplete = true;
                         break;
                     }
                     $this->iterator->next();
+                }
+                if(!$seekComplete) {
+                    $this->iterator = null;
                 }
             }
         }
@@ -228,11 +236,16 @@ class Body implements \Psr\Http\Message\StreamInterface {
         if($this->iterator) {
             $actual_size = fstat($this->fh)["size"];
             if($this->pos + 1 >= $actual_size) {
+                $seekComplete = false;
                 while($this->iterator->valid()) {
                     if($this->pos + 1 < fstat($this->fh)["size"]) {
+                        $seekComplete = true;
                         break;
                     }
                     $this->iterator->next();
+                }
+                if(!$seekComplete) {
+                    $this->iterator = null;
                 }
             }
         }

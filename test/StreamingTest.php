@@ -12,7 +12,7 @@ class StreamingTest extends \PHPUnit\Framework\TestCase {
     public function testStreaming() {
         $app = $this
             ->getMockBuilder("\Celery\App")
-            ->setMethods(["sendHeaders"])
+            ->onlyMethods(["sendHeaders"])
             ->getMock();
 
         $app->method("sendHeaders")->willReturn(null);
@@ -22,7 +22,7 @@ class StreamingTest extends \PHPUnit\Framework\TestCase {
             array $args
         ) {
             $body = new \Celery\Body();
-            $b = clone($body);
+            $bx = clone($body);
             $body->setIterator(
                 (function($b) {
                     $b->write("Hello");
@@ -32,17 +32,17 @@ class StreamingTest extends \PHPUnit\Framework\TestCase {
                     yield;
                     usleep(10000);
                     $b->write("World");
-                })($b)
+                })($bx)
             );
             return $res->withBody($body);
         });
 
         $written = [];
         $times = [];
-        ob_start(function($buffer) use (&$written, &$times) {
+
+        ob_start(function(string $buffer, int $phase) use (&$written, &$times) {
             $written[] = $buffer;
             $times[] = microtime(true);
-            return "";
         }, 1);
         $app->run(false, [
             "REQUEST_METHOD" => "get",

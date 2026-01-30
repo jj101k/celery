@@ -102,7 +102,7 @@ class UploadedFile implements \Psr\Http\Message\UploadedFileInterface {
     }
 
     /**
-     * @inheritdocs
+     * @inheritdoc
      */
     public function getClientMediaType() {
         return $this->mimeType;

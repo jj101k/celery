@@ -25,7 +25,7 @@ class ResponseTest extends \PHPUnit\Framework\TestCase {
                 "message" => "Unknown error",
             ],
         ]);
-        $this->assertRegExp(
+        $this->assertMatchesRegularExpression(
             "/^[{]/",
             "" . $response->getBody(),
             "Writing JSON after other content works"

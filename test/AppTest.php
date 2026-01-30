@@ -34,24 +34,22 @@ class AppTest extends \PHPUnit\Framework\TestCase {
     public function testHandlers() {
         $app = $this
             ->getMockBuilder("\Celery\App")
-            ->setMethods(["sendHeaders"])
+            ->onlyMethods(["sendHeaders"])
             ->getMock();
 
         $saved_greeting = null;
         $saved_headers = null;
 
-        $app->method("sendHeaders")->will(
-            $this->returnCallback(function(
-                string $greeting,
-                array $headers
-            ) use (
-                &$saved_greeting,
-                &$saved_headers
-            ) {
-                $saved_greeting = $greeting;
-                $saved_headers = $headers;
-            })
-        );
+        $app->method("sendHeaders")->willReturnCallback(function(
+            string $greeting,
+            array $headers
+        ) use (
+            &$saved_greeting,
+            &$saved_headers
+        ) {
+            $saved_greeting = $greeting;
+            $saved_headers = $headers;
+        });
         $handler_for = function(string $method) {
             return function(
                 ServerRequestInterface $req,
@@ -93,12 +91,12 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             json_decode($this->runRequest($app, "GET", "/a"), true),
             "GET /a: as expected"
         );
-        $this->assertRegexp(
+        $this->assertMatchesRegularExpression(
             "#^HTTP/1.1 200#",
             $saved_greeting,
             "GET /a: returned a success code"
         );
-        $this->assertRegExp(
+        $this->assertMatchesRegularExpression(
             "#^Content-Type: application/json#mi",
             implode("\r\n", $saved_headers),
             "GET /a: Headers include a content type (application/json)"
@@ -145,12 +143,10 @@ class AppTest extends \PHPUnit\Framework\TestCase {
     public function testHelloWorld() {
         $app = $this
             ->getMockBuilder("\Celery\App")
-            ->setMethods(["sendHeaders"])
+            ->onlyMethods(["sendHeaders"])
             ->getMock();
 
-        $app->method("sendHeaders")->will(
-            $this->returnCallback(function() {})
-        );
+        $app->method("sendHeaders")->willReturnCallback(function() {});
         $app->get(
             "/hello/{name}",
             function(
@@ -175,7 +171,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
     public function testConfig() {
         $app = $this
             ->getMockBuilder("\Celery\App")
-            ->setMethods(["sendHeaders"])
+            ->onlyMethods(["sendHeaders"])
             ->setConstructorArgs([
                 [
                     "errorHandler" => function() {
@@ -232,18 +228,16 @@ class AppTest extends \PHPUnit\Framework\TestCase {
         $saved_greeting = null;
         $saved_headers = null;
 
-        $app->method("sendHeaders")->will(
-            $this->returnCallback(function(
-                string $greeting,
-                array $headers
-            ) use (
-                &$saved_greeting,
-                &$saved_headers
-            ) {
-                $saved_greeting = $greeting;
-                $saved_headers = $headers;
-            })
-        );
+        $app->method("sendHeaders")->willReturnCallback(function(
+            string $greeting,
+            array $headers
+        ) use (
+            &$saved_greeting,
+            &$saved_headers
+        ) {
+            $saved_greeting = $greeting;
+            $saved_headers = $headers;
+        });
         $app->get("/exception", function() {
             throw new \Exception("foo");
         });
@@ -257,7 +251,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             json_decode($this->runRequest($app, "GET", "/exception"), true),
             "errorHandler: works"
         );
-        $this->assertRegexp(
+        $this->assertMatchesRegularExpression(
             "#^HTTP/1.1 500#",
             $saved_greeting,
             "errorHandler: produces 500 error"
@@ -267,7 +261,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             json_decode($this->runRequest($app, "GET", "/error"), true),
             "phpErrorHandler: works"
         );
-        $this->assertRegexp(
+        $this->assertMatchesRegularExpression(
             "#^HTTP/1.1 500#",
             $saved_greeting,
             "phpErrorHandler: produces 500 error"
@@ -277,7 +271,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             json_decode($this->runRequest($app, "GET", "/notfound"), true),
             "notFoundHandler: works"
         );
-        $this->assertRegexp(
+        $this->assertMatchesRegularExpression(
             "#^HTTP/1.1 404#",
             $saved_greeting,
             "notFoundHandler: produces 404 error"
@@ -287,7 +281,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             json_decode($this->runRequest($app, "POST", "/exception"), true),
             "notAllowedHandler: works"
         );
-        $this->assertRegexp(
+        $this->assertMatchesRegularExpression(
             "#^HTTP/1.1 405#",
             $saved_greeting,
             "notAllowedHandler: produces 405 error"
@@ -299,24 +293,22 @@ class AppTest extends \PHPUnit\Framework\TestCase {
     public function testNoConfig() {
         $app = $this
             ->getMockBuilder("\Celery\App")
-            ->setMethods(["sendHeaders"])
+            ->onlyMethods(["sendHeaders"])
             ->getMock();
 
         $saved_greeting = null;
         $saved_headers = null;
 
-        $app->method("sendHeaders")->will(
-            $this->returnCallback(function(
-                string $greeting,
-                array $headers
-            ) use (
-                &$saved_greeting,
-                &$saved_headers
-            ) {
-                $saved_greeting = $greeting;
-                $saved_headers = $headers;
-            })
-        );
+        $app->method("sendHeaders")->willReturnCallback(function(
+            string $greeting,
+            array $headers
+        ) use (
+            &$saved_greeting,
+            &$saved_headers
+        ) {
+            $saved_greeting = $greeting;
+            $saved_headers = $headers;
+        });
         $app->get("/exception", function() {
             throw new \Exception("foo");
         });
@@ -328,7 +320,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             @$this->runRequest($app, "GET", "/exception"),
             "errorHandler (default): works"
         );
-        $this->assertRegexp(
+        $this->assertMatchesRegularExpression(
             "#^HTTP/1.1 500#",
             $saved_greeting,
             "errorHandler (default): produces 500 error"
@@ -337,7 +329,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             @$this->runRequest($app, "GET", "/error"),
             "phpErrorHandler (default): works"
         );
-        $this->assertRegexp(
+        $this->assertMatchesRegularExpression(
             "#^HTTP/1.1 500#",
             $saved_greeting,
             "phpErrorHandler (default): produces 500 error"
@@ -346,7 +338,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             $this->runRequest($app, "GET", "/notfound"),
             "notFoundHandler (default): works"
         );
-        $this->assertRegexp(
+        $this->assertMatchesRegularExpression(
             "#^HTTP/1.1 404#",
             $saved_greeting,
             "notFoundHandler (default): produces 404 error"
@@ -355,7 +347,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
             $this->runRequest($app, "POST", "/exception"),
             "notAllowedHandler (default): works"
         );
-        $this->assertRegexp(
+        $this->assertMatchesRegularExpression(
             "#^HTTP/1.1 405#",
             $saved_greeting,
             "notAllowedHandler (default): produces 405 error"
