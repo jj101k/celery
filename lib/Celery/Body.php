@@ -119,8 +119,8 @@ class Body implements \Psr\Http\Message\StreamInterface {
      * @inheritdoc
      */
     public function eof() {
-        if(!$this->forRead) {
-            return !$this->iterator;
+        if($this->iterator) {
+            return false;
         }
         if($this->pos != ftell($this->fh)) {
             fseek($this->fh, $this->pos, SEEK_SET);
