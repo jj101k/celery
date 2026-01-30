@@ -1,5 +1,9 @@
 # Changes
 
+## 2.0.1
+
+- Bug: EOF detection would fail for iterators when originally attached to a file
+
 ## 2.0.0
 
 - Update to PHP 8.5
