@@ -1,5 +1,9 @@
 # Changes
 
+## 2.0.0
+
+- Update to PHP 8.5
+
 ## 1.3.0
 
 - Add an explicit mechanism to split a stream into writable and readable
